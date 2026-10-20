@@ -9,13 +9,13 @@ import com.rafael.todo.module.user.model.UserModel;
 import com.rafael.todo.module.user.service.IDeleteUserUseCase;
 import com.rafael.todo.module.user.service.IFindUserUseCase;
 import com.rafael.todo.module.user.service.IUpdateUserUseCase;
-import com.rafael.todo.module.user.service.IUserCreateUseCase;
+import com.rafael.todo.module.user.service.ICreateUserUseCase;
 import com.rafael.todo.module.user.service.dto.CreateUserDtoService;
 import com.rafael.todo.module.user.service.dto.UpdateUserDtoService;
 
 @Service 
 public final class UserService implements 
-    IUserCreateUseCase, 
+    ICreateUserUseCase, 
     IFindUserUseCase, 
     IDeleteUserUseCase, 
     IUpdateUserUseCase 
