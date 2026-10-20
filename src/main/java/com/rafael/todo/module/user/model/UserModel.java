@@ -71,10 +71,6 @@ public final class UserModel {
         return copy(newName, this.email, this.password, this.role, this.account);
     }
 
-    public UserModel updateEmail(UserEmail newEmail) {
-        return copy(this.name, newEmail, this.password, this.role, this.account);
-    }
-
     public UserModel changePassword(UserPassword newPassword) {
         return copy(this.name, this.email, newPassword, this.role, this.account);
     }
