@@ -4,6 +4,6 @@ public record CreateUserDtoService(
         String name,
         String email,
         String password,
-        String userRole
+        String role
     ) {
 }

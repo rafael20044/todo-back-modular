@@ -6,7 +6,7 @@ public record UpdateUserDtoService(
     UUID uuid, 
     String name, 
     String password, 
-    String userRole
+    String role
 ) {
 
 }

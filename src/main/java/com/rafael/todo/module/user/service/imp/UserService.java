@@ -3,15 +3,25 @@ package com.rafael.todo.module.user.service.imp;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.rafael.todo.module.user.adapter.ICreateUserAdapter;
+import com.rafael.todo.module.user.adapter.IDeleteUserAdapter;
+import com.rafael.todo.module.user.adapter.IFindUserAdapter;
+import com.rafael.todo.module.user.adapter.IUpdateUserAdapter;
+import com.rafael.todo.module.user.exception.UserEmailException;
 import com.rafael.todo.module.user.model.UserModel;
+import com.rafael.todo.module.user.model.vo.UserName;
+import com.rafael.todo.module.user.model.vo.UserPassword;
+import com.rafael.todo.module.user.model.vo.UserRole;
 import com.rafael.todo.module.user.service.IDeleteUserUseCase;
 import com.rafael.todo.module.user.service.IFindUserUseCase;
 import com.rafael.todo.module.user.service.IUpdateUserUseCase;
 import com.rafael.todo.module.user.service.ICreateUserUseCase;
 import com.rafael.todo.module.user.service.dto.CreateUserDtoService;
 import com.rafael.todo.module.user.service.dto.UpdateUserDtoService;
+import com.rafael.todo.module.user.service.mapper.UserMapperService;
 
 @Service 
 public final class UserService implements 
@@ -19,36 +29,61 @@ public final class UserService implements
     IFindUserUseCase, 
     IDeleteUserUseCase, 
     IUpdateUserUseCase 
-    {
+{
+
+    private final ICreateUserAdapter createUserAdapter;
+    private final IUpdateUserAdapter updateUserAdapter;
+    private final IDeleteUserAdapter deleteUserAdapter;
+    private final IFindUserAdapter findUserAdapter;
+
+    @Autowired 
+    public UserService(
+        ICreateUserAdapter createUserAdapter,
+        IUpdateUserAdapter updateUserAdapter,
+        IDeleteUserAdapter deleteUserAdapter,
+        IFindUserAdapter findUserAdapter
+    ) {
+        this.createUserAdapter = createUserAdapter;
+        this.updateUserAdapter = updateUserAdapter;
+        this.deleteUserAdapter = deleteUserAdapter;
+        this.findUserAdapter = findUserAdapter;
+    }
 
     @Override
     public UserModel update(UpdateUserDtoService user) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'update'");
+        var model = this.findUserAdapter.findById(user.uuid());
+        model.changeName(user.name() == null ? model.getName() : UserName.of(user.name()));
+        model.changePassword(user.password() == null ? model.getPassword() : UserPassword.fromRaw(user.password()));
+        model.changeRole(user.role() == null ? model.getRole() : UserRole.of(user.role()));
+        return this.updateUserAdapter.update(model);
     }
 
     @Override
     public void delete(UUID uuid) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'delete'");
+        this.deleteUserAdapter.delete(uuid);
     }
 
     @Override
     public UserModel findById(UUID uuid) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findById'");
+        return this.findUserAdapter.findById(uuid);
     }
 
     @Override
     public List<UserModel> findAll() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findAll'");
+        return this.findUserAdapter.findAll();
     }
 
     @Override
     public UserModel create(CreateUserDtoService userDto) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'create'");
+
+        var exists = this.findUserAdapter.findByEmail(userDto.email());
+
+        if (exists.isPresent()){
+            throw UserEmailException.alreadyExists();
+        }
+
+        var model = UserMapperService.toUserModel(userDto);
+        return this.createUserAdapter.create(model);
     }
 
 }

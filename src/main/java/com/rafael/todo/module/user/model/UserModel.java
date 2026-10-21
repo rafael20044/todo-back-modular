@@ -1,7 +1,9 @@
 package com.rafael.todo.module.user.model;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
+import com.rafael.todo.module.user.enums.UserRoleEnum;
 import com.rafael.todo.module.user.model.vo.UserAccount;
 import com.rafael.todo.module.user.model.vo.UserEmail;
 import com.rafael.todo.module.user.model.vo.UserId;
@@ -67,7 +69,7 @@ public final class UserModel {
         return new UserModel(id, email, password, name, role, account, createdAt, updatedAt);
     }
 
-    public UserModel updateName(UserName newName) {
+    public UserModel changeName(UserName newName) {
         return copy(newName, this.email, this.password, this.role, this.account);
     }
 
@@ -85,6 +87,30 @@ public final class UserModel {
 
     public UserModel deactivate() {
         return copy(this.name, this.email, this.password, this.role, this.account.deactivate());
+    }
+
+    public UUID getIdValue() {
+        return id.value();
+    }
+
+    public String getEmailValue() {
+        return email.value();
+    }
+
+    public String getPasswordValue() {
+        return password.value();
+    }
+
+    public String getNameValue() {
+        return name.value();
+    }
+
+    public UserRoleEnum getRoleValue() {
+        return role.value();
+    }
+
+    public boolean getAccountValue() {
+        return account.isActive();
     }
 
     private UserModel copy(UserName name, UserEmail email, UserPassword password, UserRole role, UserAccount account){
