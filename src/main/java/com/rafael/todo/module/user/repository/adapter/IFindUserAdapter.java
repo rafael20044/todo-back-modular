@@ -1,4 +1,4 @@
-package com.rafael.todo.module.user.adapter;
+package com.rafael.todo.module.user.repository.adapter;
 
 import java.util.List;
 import java.util.Optional;
