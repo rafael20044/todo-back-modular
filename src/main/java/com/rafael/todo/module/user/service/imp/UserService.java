@@ -52,9 +52,11 @@ public final class UserService implements
     @Override
     public UserModel update(UpdateUserDtoService user) {
         var model = this.findUserAdapter.findById(user.uuid());
-        model.changeName(user.name() == null ? model.getName() : UserName.of(user.name()));
-        model.changePassword(user.password() == null ? model.getPassword() : UserPassword.fromRaw(user.password()));
-        model.changeRole(user.role() == null ? model.getRole() : UserRole.of(user.role()));
+        model = model
+            .changeName(user.name() == null ? model.getName() : UserName.of(user.name()))
+            .changePassword(user.password() == null ? model.getPassword() : UserPassword.fromRaw(user.password()))
+            .changeRole(user.role() == null ? model.getRole() : UserRole.of(user.role()));
+        
         return this.updateUserAdapter.update(model);
     }
 
