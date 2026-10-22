@@ -4,6 +4,6 @@ import com.rafael.todo.module.user.model.UserModel;
 
 public interface IUpdateUserAdapter {
 
-    UserModel update(UserModel user);
+    UserModel update(UserModel user, boolean updatePassword);
     
 }

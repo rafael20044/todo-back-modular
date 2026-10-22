@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.rafael.todo.module.user.exception.UserEmailException;
+import com.rafael.todo.module.user.exception.UserUuidException;
 import com.rafael.todo.module.user.model.UserModel;
 import com.rafael.todo.module.user.model.vo.UserName;
 import com.rafael.todo.module.user.model.vo.UserPassword;
@@ -51,13 +52,14 @@ public final class UserService implements
 
     @Override
     public UserModel update(UpdateUserDtoService user) {
-        var model = this.findUserAdapter.findById(user.uuid());
+        var model = findById(user.uuid());
+        var update = user.password() != null;
         model = model
             .changeName(user.name() == null ? model.getName() : UserName.of(user.name()))
             .changePassword(user.password() == null ? model.getPassword() : UserPassword.fromRaw(user.password()))
             .changeRole(user.role() == null ? model.getRole() : UserRole.of(user.role()));
         
-        return this.updateUserAdapter.update(model);
+        return this.updateUserAdapter.update(model, update);
     }
 
     @Override
@@ -67,7 +69,11 @@ public final class UserService implements
 
     @Override
     public UserModel findById(UUID uuid) {
-        return this.findUserAdapter.findById(uuid);
+        var exist = this.findUserAdapter.findById(uuid);
+        if (exist.isEmpty()) {
+            throw UserUuidException.notFound();
+        }
+        return exist.get();
     }
 
     @Override

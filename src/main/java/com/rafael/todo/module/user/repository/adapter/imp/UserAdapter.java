@@ -46,27 +46,37 @@ public final class UserAdapter implements
 
     @Override
     public void delete(UUID uuid) {
-        
+        this.userRepository.deleteById(uuid);
     }
 
     @Override
-    public UserModel findById(UUID uuid) {
-        return null;
+    public Optional<UserModel> findById(UUID uuid) {
+        var exist = this.userRepository.findById(uuid);
+        return exist.map(UserMapperRepository::toModel);
     }
 
     @Override
     public List<UserModel> findAll() {
-        return null;
+        return this.userRepository.findAll().stream().map(UserMapperRepository::toModel).toList();
     }
 
     @Override
     public Optional<UserModel> findByEmail(String email) {
-        return Optional.empty();
+        var exist = this.userRepository.findByEmail(email);
+        return exist.map(UserMapperRepository::toModel);
     }
 
     @Override
-    public UserModel update(UserModel user) {
-        return null;
+    public UserModel update(UserModel user, boolean updatePassword) {
+        var entity = UserMapperRepository.toEntity(user);
+        
+        if (updatePassword) {
+            entity.setPasswordHash(passwordEncoder.encode(entity.getPasswordHash()));
+        }
+
+        this.userRepository.save(entity);
+        
+        return UserMapperRepository.toModel(this.userRepository.save(entity));
     }
 
 }

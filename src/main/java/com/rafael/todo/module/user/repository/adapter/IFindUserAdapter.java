@@ -8,7 +8,7 @@ import com.rafael.todo.module.user.model.UserModel;
 
 public interface IFindUserAdapter {
 
-    UserModel findById(UUID id);
+    Optional<UserModel> findById(UUID id);
 
     List<UserModel> findAll();
 

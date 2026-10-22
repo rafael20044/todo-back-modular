@@ -1,7 +1,7 @@
 package com.rafael.todo.module.user.model.vo;
 
-import com.rafael.todo.module.user.enums.UserRoleEnum;
 import com.rafael.todo.module.user.exception.UserRoleException;
+import com.rafael.todo.module.user.model.enums.UserRoleEnum;
 
 public record UserRole(UserRoleEnum value) {
 

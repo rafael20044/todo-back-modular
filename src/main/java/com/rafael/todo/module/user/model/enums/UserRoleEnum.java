@@ -1,4 +1,4 @@
-package com.rafael.todo.module.user.enums;
+package com.rafael.todo.module.user.model.enums;
 
 import lombok.Getter;
 

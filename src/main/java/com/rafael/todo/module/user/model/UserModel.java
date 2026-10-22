@@ -3,7 +3,7 @@ package com.rafael.todo.module.user.model;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-import com.rafael.todo.module.user.enums.UserRoleEnum;
+import com.rafael.todo.module.user.model.enums.UserRoleEnum;
 import com.rafael.todo.module.user.model.vo.UserAccount;
 import com.rafael.todo.module.user.model.vo.UserEmail;
 import com.rafael.todo.module.user.model.vo.UserId;
