@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +21,7 @@ import com.rafael.todo.module.user.controller.dto.ResponseUserDto;
 import com.rafael.todo.module.user.controller.dto.UpdateUserDto;
 import com.rafael.todo.module.user.controller.mapper.UserMapperController;
 import com.rafael.todo.module.user.service.ICreateUserUseCase;
+import com.rafael.todo.module.user.service.IDeleteUserUseCase;
 import com.rafael.todo.module.user.service.IFindUserUseCase;
 import com.rafael.todo.module.user.service.IUpdateUserUseCase;
 
@@ -30,12 +32,14 @@ public class UserController {
     private final ICreateUserUseCase createUser;
     private final IFindUserUseCase findUser;
     private final IUpdateUserUseCase updateUser;
+    private final IDeleteUserUseCase deleteUser;
 
     @Autowired 
-    public UserController(ICreateUserUseCase createUser, IFindUserUseCase findUser, IUpdateUserUseCase updateUser) {
+    public UserController(ICreateUserUseCase createUser, IFindUserUseCase findUser, IUpdateUserUseCase updateUser, IDeleteUserUseCase deleteUser) {
         this.createUser = createUser;
         this.findUser = findUser;
         this.updateUser = updateUser;
+        this.deleteUser = deleteUser;
     }
     
     @PostMapping 
@@ -67,6 +71,12 @@ public class UserController {
         var model = this.updateUser.update(UserMapperController.toServiceDto(uuid, dto));
         var response = UserMapperController.toResponseDto(model);
         return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping ("/{uuid}")
+    public ResponseEntity<Void> delete(@PathVariable UUID uuid){
+        this.deleteUser.delete(uuid);
+        return ResponseEntity.noContent().build();
     }
 
 }
