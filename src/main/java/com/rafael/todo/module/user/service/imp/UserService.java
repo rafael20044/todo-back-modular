@@ -24,7 +24,10 @@ import com.rafael.todo.module.user.service.dto.CreateUserDtoService;
 import com.rafael.todo.module.user.service.dto.UpdateUserDtoService;
 import com.rafael.todo.module.user.service.mapper.UserMapperService;
 
+import lombok.extern.java.Log;
+
 @Service 
+@Log
 public final class UserService implements 
     ICreateUserUseCase, 
     IFindUserUseCase, 
@@ -52,6 +55,7 @@ public final class UserService implements
 
     @Override
     public UserModel update(UpdateUserDtoService user) {
+        log.info("Updating user with UUID: " + user.uuid());
         var model = findById(user.uuid());
         var update = user.password() != null;
         model = model
@@ -64,6 +68,7 @@ public final class UserService implements
 
     @Override
     public void delete(UUID uuid) {
+        log.info("Deleting user with UUID: " + uuid);
         this.deleteUserAdapter.delete(uuid);
     }
 
@@ -71,6 +76,7 @@ public final class UserService implements
     public UserModel findById(UUID uuid) {
         var exist = this.findUserAdapter.findById(uuid);
         if (exist.isEmpty()) {
+            log.warning("User not found with UUID: " + uuid);
             throw UserUuidException.notFound();
         }
         return exist.get();
@@ -78,15 +84,17 @@ public final class UserService implements
 
     @Override
     public List<UserModel> findAll() {
+        log.info("Fetching all users from persistence");
         return this.findUserAdapter.findAll();
     }
 
     @Override
     public UserModel create(CreateUserDtoService userDto) {
-
+        log.info("Validating email uniqueness for: " + userDto.email());
         var exists = this.findUserAdapter.findByEmail(userDto.email());
 
         if (exists.isPresent()){
+            log.warning("Email already registered: " + userDto.email());
             throw UserEmailException.alreadyExists();
         }
 
