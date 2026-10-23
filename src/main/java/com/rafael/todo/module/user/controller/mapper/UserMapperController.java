@@ -1,5 +1,11 @@
 package com.rafael.todo.module.user.controller.mapper;
 
+import java.util.List;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+
 import com.rafael.todo.module.user.controller.dto.CreateUserDto;
 import com.rafael.todo.module.user.controller.dto.ResponseUserDto;
 import com.rafael.todo.module.user.model.UserModel;
@@ -22,6 +28,12 @@ public final class UserMapperController {
             model.getCreatedAt(),
             model.getUpdatedAt()
         );
+    }
+
+    public static Page<ResponseUserDto> toPage(List<UserModel> users, int page, int size){
+        var pageable = PageRequest.of(page, size);
+        var pages = new PageImpl<>(users, pageable, users.size());
+        return pages.map(UserMapperController::toResponseDto);
     }
 
 }
