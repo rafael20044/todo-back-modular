@@ -10,16 +10,16 @@ public final class UserRoleException extends DomainException {
     private static final String CODE_ROLE_INVALID = "user.role.invalid";
     private static final String MSG_ROLE_INVALID = "User role is invalid or unsupported";
 
-    private UserRoleException(String code, String message) {
-        super(code, message);
+    private UserRoleException(String code, String message, int statusCode) {
+        super(code, message, statusCode);
     }
 
     public static UserRoleException required() {
-        return new UserRoleException(CODE_ROLE_REQUIRED, MSG_ROLE_REQUIRED);
+        return new UserRoleException(CODE_ROLE_REQUIRED, MSG_ROLE_REQUIRED, 400);
     }
 
     public static UserRoleException invalid() {
-        return new UserRoleException(CODE_ROLE_INVALID, MSG_ROLE_INVALID);
+        return new UserRoleException(CODE_ROLE_INVALID, MSG_ROLE_INVALID, 400);
     }
 
 }

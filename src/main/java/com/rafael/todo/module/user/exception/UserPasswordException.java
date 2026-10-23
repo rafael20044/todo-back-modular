@@ -14,21 +14,21 @@ public final class UserPasswordException extends DomainException {
     private static final String CODE_PASSWORD_INVALID_HASH = "user.password.invalid.hash";
     private static final String MSG_PASSWORD_INVALID_HASH = "User password hash is invalid or malformed";
 
-    private UserPasswordException(String code, String message) {
-        super(code, message);
+    private UserPasswordException(String code, String message, int statusCode) {
+        super(code, message, statusCode);
     }
 
     public static UserPasswordException required() {
-        return new UserPasswordException(CODE_PASSWORD_REQUIRED, MSG_PASSWORD_REQUIRED);
+        return new UserPasswordException(CODE_PASSWORD_REQUIRED, MSG_PASSWORD_REQUIRED, 400);
     }
 
     public static UserPasswordException tooShort() {
         return new UserPasswordException(CODE_PASSWORD_TOO_SHORT,
-                String.format(MSG_PASSWORD_TOO_SHORT, MyConst.MIN_PASSWORD_LENGTH.getValue()));
+                String.format(MSG_PASSWORD_TOO_SHORT, MyConst.MIN_PASSWORD_LENGTH.getValue()), 400);
     }
 
     public static UserPasswordException invalidHash() {
-        return new UserPasswordException(CODE_PASSWORD_INVALID_HASH, MSG_PASSWORD_INVALID_HASH);
+        return new UserPasswordException(CODE_PASSWORD_INVALID_HASH, MSG_PASSWORD_INVALID_HASH, 400);
     }
 
 }

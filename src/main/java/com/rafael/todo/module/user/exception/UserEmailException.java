@@ -17,25 +17,25 @@ public final class UserEmailException extends DomainException {
     private static final String CODE_EMAIL_ALREADY_EXISTS = "user.email.already.exists";
     private static final String MSG_EMAIL_ALREADY_EXISTS = "User with this email already exists";
 
-    private UserEmailException(String code, String message) {
-        super(code, message);
+    private UserEmailException(String code, String message, int statusCode) {
+        super(code, message, statusCode);
     }
 
     public static UserEmailException required() {
-        return new UserEmailException(CODE_EMAIL_REQUIRED, MSG_EMAIL_REQUIRED);
+        return new UserEmailException(CODE_EMAIL_REQUIRED, MSG_EMAIL_REQUIRED, 400);
     }
 
     public static UserEmailException invalidFormat() {
-        return new UserEmailException(CODE_EMAIL_INVALID_FORMAT, MSG_EMAIL_INVALID_FORMAT);
+        return new UserEmailException(CODE_EMAIL_INVALID_FORMAT, MSG_EMAIL_INVALID_FORMAT, 400);
     }
 
     public static UserEmailException tooLong() {
         return new UserEmailException(CODE_EMAIL_TOO_LONG,
-                String.format(MSG_EMAIL_TOO_LONG, MyConst.MAX_EMAIL_LENGTH.getValue()));
+                String.format(MSG_EMAIL_TOO_LONG, MyConst.MAX_EMAIL_LENGTH.getValue()), 400);
     }
 
     public static UserEmailException alreadyExists() {
-        return new UserEmailException(CODE_EMAIL_ALREADY_EXISTS, MSG_EMAIL_ALREADY_EXISTS);
+        return new UserEmailException(CODE_EMAIL_ALREADY_EXISTS, MSG_EMAIL_ALREADY_EXISTS, 409);
     }
 
 }

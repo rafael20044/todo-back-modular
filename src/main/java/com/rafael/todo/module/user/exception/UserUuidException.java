@@ -13,20 +13,20 @@ public final class UserUuidException extends DomainException {
     private static final String CODE_UUID_INVALID_FORMAT = "user.uuid.invalid.format";
     private static final String MSG_UUID_INVALID_FORMAT = "User UUID format is invalid";
 
-    private UserUuidException(String code, String message) {
-        super(code, message);
+    private UserUuidException(String code, String message, int statusCode) {
+        super(code, message, statusCode);
     }
 
     public static UserUuidException notFound() {
-        return new UserUuidException(CODE_UUID_NOT_FOUND, MSG_UUID_NOT_FOUND);
+        return new UserUuidException(CODE_UUID_NOT_FOUND, MSG_UUID_NOT_FOUND, 404);
     }
 
     public static UserUuidException required() {
-        return new UserUuidException(CODE_UUID_REQUIRED, MSG_UUID_REQUIRED);
+        return new UserUuidException(CODE_UUID_REQUIRED, MSG_UUID_REQUIRED, 400);
     }
 
     public static UserUuidException invalidFormat() {
-        return new UserUuidException(CODE_UUID_INVALID_FORMAT, MSG_UUID_INVALID_FORMAT);
+        return new UserUuidException(CODE_UUID_INVALID_FORMAT, MSG_UUID_INVALID_FORMAT, 400);
     }
 
 }
