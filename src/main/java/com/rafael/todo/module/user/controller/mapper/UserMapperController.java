@@ -1,6 +1,7 @@
 package com.rafael.todo.module.user.controller.mapper;
 
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
@@ -8,8 +9,10 @@ import org.springframework.data.domain.PageRequest;
 
 import com.rafael.todo.module.user.controller.dto.CreateUserDto;
 import com.rafael.todo.module.user.controller.dto.ResponseUserDto;
+import com.rafael.todo.module.user.controller.dto.UpdateUserDto;
 import com.rafael.todo.module.user.model.UserModel;
 import com.rafael.todo.module.user.service.dto.CreateUserDtoService;
+import com.rafael.todo.module.user.service.dto.UpdateUserDtoService;
 
 public final class UserMapperController {
 
@@ -34,6 +37,10 @@ public final class UserMapperController {
         var pageable = PageRequest.of(page, size);
         var pages = new PageImpl<>(users, pageable, users.size());
         return pages.map(UserMapperController::toResponseDto);
+    }
+
+    public static UpdateUserDtoService toServiceDto(UUID uuid, UpdateUserDto dto){
+        return new UpdateUserDtoService(uuid, dto.username(), dto.password(), dto.role());
     }
 
 }
