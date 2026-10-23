@@ -9,7 +9,10 @@ public enum MyConst {
     MAX_NAME_LENGTH("100"),
     MIN_NAME_LENGTH("2"),
     MIN_PASSWORD_LENGTH("8"),
-    EMAIL_REGEX("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    EMAIL_REGEX("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"),
+    MAX_CATEGORY_NAME_LENGTH("50"),
+    MIN_CATEGORY_NAME_LENGTH("2"),
+    HEX_COLOR_REGEX("^#[A-Fa-f0-9]{6}$");
 
     private final String value;
 
