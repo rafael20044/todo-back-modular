@@ -33,7 +33,10 @@ com.rafael.todo/
 ### Reglas de Diseño Pragmático (Sin Hexagonal Estricta)
 - **Simplicidad**: Se evita la sobreingeniería de crear múltiples interfaces de puertos por cada operación CRUD.
 - **Aislamiento**: Cada módulo gestiona sus propias entidades, modelos y controladores.
-- **Comunicación**: Si un módulo necesita comunicarse con otro, lo hace a través de contratos claros (servicios de aplicación o IDs).
+- **Comunicación e Integridad Inter-Modular (Regla de Oro)**:
+  - **Prohibido**: Relaciones JPA directas (`@ManyToOne`, `@OneToMany`) entre entidades de diferentes módulos (por ejemplo: `CategoryEntity` o `TaskEntity` jamás referencian directamente a `UserEntity`).
+  - **Persistencia por IDs Escalares**: Las tablas y entidades JPA solo almacenan el identificador escalar del módulo relacionado (`UUID userId`, `Long categoryId`).
+  - **Validación en Capa de Servicio**: Para evitar violaciones de clave foránea en base de datos (`DataIntegrityViolationException` / HTTP 500), el servicio del módulo inyecta la interfaz del caso de uso del otro módulo (ej. `IFindUserUseCase`) y valida la existencia antes de persistir (`findUserUseCase.findById(...)`), retornando un HTTP 404 claro si el recurso no existe.
 
 ---
 
@@ -64,16 +67,25 @@ com.rafael.todo/
 
 ### D. Capa de Persistencia (`repository`)
 - **Interfaz del repositorio**: `I<Modulo>Repository` que extiende `JpaRepository`.
+- **Filtros Dinámicos en JPQL**: Para consultas con parámetros opcionales (ej. `userId`), se utiliza la cláusula:
+  ```sql
+  @Query("SELECT e FROM Entity e WHERE (:param IS NULL OR e.field = :param)")
+  ```
+  resolviendo el filtrado en base de datos en una única consulta sin bifurcaciones en Java.
 - **Subpaquete `entity/`**: Entidades JPA (`@Entity`, `@Table`) con tipos de datos de base de datos.
 - **Subpaquete `adapter/`**: Adaptadores (`@Component`) que coordinan entre `I<Modulo>Repository`, `PasswordEncoder` (si aplica) y el mapeo hacia/desde el modelo de dominio.
+- **Subpaquete `mapper/`**: Mappers estáticos bidireccionales entre Entity y Model (`toEntity`, `toModel`).
 
 ### E. Capa de Aplicación (`service`)
 - Interfaces de casos de uso (`ICreate...UseCase`, etc.) implementadas en `...Service`.
-- Orquestan las reglas de negocio, validaciones previas y llamadas al adaptador de persistencia.
+- Orquestan las reglas de negocio, validaciones cruzadas entre módulos y llamadas al adaptador de persistencia.
+- Subpaquetes: `dto/` (Records de servicio), `imp/` (Implementación con `@Log`) y `mapper/` (Mapper a modelo de dominio).
 
 ### F. Capa de Presentación (`controller`)
-- Controladores `@RestController` con `@RequestMapping`.
-- DTOs de entrada (`Create...Dto`, `Update...Dto`) y de salida (`Response...Dto`).
+- Controladores `@RestController` con `@RequestMapping` y `@Log`.
+- **Endpoint Unificado de Listados (`findAll`)**: Un único endpoint `GET` que recibe filtros opcionales como `@RequestParam` y paginación (`page`, `size`), retornando `ResponseEntity<Page<ResponseDto>>`.
+- **Eliminación (`DELETE`)**: Siempre retorna `ResponseEntity<Void>` con status HTTP 204 (`ResponseEntity.noContent().build()`).
+- DTOs de entrada (`Create...Dto`, `Update...Dto`) y de salida (`Response...Dto`) implementados como `record`s.
 - Mappers estáticos en subpaquete `mapper/`.
 
 ---
@@ -81,3 +93,4 @@ com.rafael.todo/
 ## 3. Manejo Global de Errores (`shared`)
 - Toda excepción que herede de `DomainException` es capturada de forma automática por `GlobalExceptionController` (`@RestControllerAdvice`).
 - La respuesta HTTP devuelve un JSON estándar con [`ErrorDto`](file:///d:/Documentos/VS/frameworks/Spring%20boot/Todo/src/main/java/com/rafael/todo/shared/ErrorDto.java) (`code`, `message`, `status`), garantizando consistencia en todos los módulos de la aplicación.
+

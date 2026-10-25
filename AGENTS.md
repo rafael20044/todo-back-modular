@@ -30,12 +30,20 @@ El proyecto adopta una **Arquitectura Modular por Capas Pragmática (Vertical Sl
 
 ### 2. Capas por Módulo
 Dentro de cada módulo se organiza una estructura de capas clara y directa:
-1. **`controller`**: Controladores REST (`@RestController`), DTOs de petición/respuesta y mappers a servicios.
+1. **`controller`**: Controladores REST (`@RestController` con `@Log`), DTOs de petición/respuesta (`record`s) y mappers a servicios.
+   - Endpoint unificado `findAll`: Soporta filtros opcionales por `@RequestParam` y paginación con `Page<ResponseDto>`.
+   - `DELETE`: Retorna siempre `ResponseEntity<Void>` con status 204 (`noContent().build()`).
 2. **`service`**: Casos de uso / lógica de negocio, DTOs de servicio y mappers a modelos de dominio.
-3. **`repository`**: Persistencia con Spring Data JPA. Contiene subpaquete `entity/` (entidades JPA) y `adapter/` (adaptadores que conectan el repositorio con el servicio).
+3. **`repository`**: Persistencia con Spring Data JPA. Contiene subpaquete `entity/` (entidades JPA), `adapter/` (adaptadores que conectan el repositorio con el servicio) y `mapper/` (mappers bidireccionales entre Entity y Model).
+   - Filtros opcionales en `@Query` con la cláusula JPQL `(:param IS NULL OR e.field = :param)`.
 4. **`model`**: Modelos de dominio inmutables ricos y subpaquete **`vo/`** con Value Objects.
 5. **`enums`**: Enums propios del dominio del módulo.
 6. **`exception`**: Fábricas de excepciones de dominio que extienden de `DomainException`.
+
+### 3. Regla de Oro: Relaciones y Validación Inter-Modular
+- **Cero Acoplamiento JPA entre Módulos**: Prohibido el uso de relaciones directas `@ManyToOne` o `@OneToMany` entre entidades de diferentes módulos.
+- **Persistencia por IDs Escalares**: Se almacenan únicamente los identificadores (`UUID userId`, `Long categoryId`).
+- **Validación Vía Casos de Uso**: La verificación de integridad referencial entre módulos se realiza en la capa de `Service` inyectando el caso de uso correspondiente (ej. `IFindUserUseCase`, `IFindCategoryUseCase`), evitando excepciones de base de datos (`DataIntegrityViolationException`) y garantizando respuestas HTTP 404 limpias.
 
 ---
 
