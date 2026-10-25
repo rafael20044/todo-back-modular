@@ -25,8 +25,11 @@ import com.rafael.todo.module.category.service.IDeleteCategoryUseCase;
 import com.rafael.todo.module.category.service.IFindCategoryUseCase;
 import com.rafael.todo.module.category.service.IUpdateCategoryUseCase;
 
+import lombok.extern.java.Log;
+
 @RestController 
-@RequestMapping ("/categories")
+@RequestMapping("/categories")
+@Log
 public final class CategoryController {
 
     private final IFindCategoryUseCase findCategoryUseCase;
@@ -48,9 +51,12 @@ public final class CategoryController {
 
     @PostMapping
     public ResponseEntity<ResponseCategoryDto> create(@RequestBody CreateCategoryDto request) {
+        log.info("POST /categories - Request received to create category: '" + request.name() + "' for user: " + request.userId());
         var model = this.createCategoryUseCase.create(CategoryMapperController.toServiceDto(request));
-        var uri = URI.create("/categories/" + model.getIdValue());
-        return ResponseEntity.created(uri).body(CategoryMapperController.toResponseDto(model));
+        var response = CategoryMapperController.toResponseDto(model);
+        var uri = URI.create("/categories/" + response.id());
+        log.info("POST /categories - Category successfully created with ID: " + response.id());
+        return ResponseEntity.created(uri).body(response);
     }
 
     @GetMapping 
@@ -59,30 +65,36 @@ public final class CategoryController {
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size
     ) {
+        log.info(String.format("GET /categories - Listing categories (userId: %s, page: %d, size: %d)", userId, page, size));
         var list = this.findCategoryUseCase.findAll(userId);
         var pages = CategoryMapperController.toPage(list, page, size);
-
         return ResponseEntity.ok(pages);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ResponseCategoryDto> findById(@PathVariable Long id) {
+        log.info("GET /categories/" + id + " - Fetching category by ID");
         var model = this.findCategoryUseCase.findById(id);
         return ResponseEntity.ok(CategoryMapperController.toResponseDto(model));
     }
 
-    @PutMapping ("/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<ResponseCategoryDto> update(
         @PathVariable Long id, 
         @RequestBody UpdateCategoryDto request
     ) {
+        log.info("PUT /categories/" + id + " - Request received to update category");
         var model = this.updateCategoryUseCase.update(CategoryMapperController.toServiceDto(id, request));
-        return ResponseEntity.ok(CategoryMapperController.toResponseDto(model));
+        var response = CategoryMapperController.toResponseDto(model);
+        log.info("PUT /categories/" + id + " - Category updated successfully");
+        return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping ("/{id}")
-    public ResponseEntity<ResponseCategoryDto> delete(@PathVariable Long id) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        log.info("DELETE /categories/" + id + " - Request received to delete category");
         this.deleteCategoryUseCase.delete(id);
+        log.info("DELETE /categories/" + id + " - Category deleted successfully");
         return ResponseEntity.noContent().build();
     }
 
