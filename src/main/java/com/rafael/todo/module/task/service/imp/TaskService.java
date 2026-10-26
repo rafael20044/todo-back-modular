@@ -26,6 +26,7 @@ import com.rafael.todo.module.task.service.IUpdateTaskUseCase;
 import com.rafael.todo.module.task.service.dto.CreateTaskDtoService;
 import com.rafael.todo.module.task.service.dto.UpdateTaskDtoService;
 import com.rafael.todo.module.task.service.mapper.TaskMapperService;
+import com.rafael.todo.module.user.service.IFindUserUseCase;
 
 @Service 
 public final class TaskService implements 
@@ -38,16 +39,19 @@ public final class TaskService implements
     private final IUpdateTaskAdapter updateTaskAdapter;
     private final IDeleteTaskAdapter deleteTaskAdapter;
     private final IFindTaskAdapter findTaskAdapter;
+    private final IFindUserUseCase findUserUseCase;
 
     @Autowired
     public TaskService(ICreateTaskAdapter createTaskAdapter, 
     IUpdateTaskAdapter updateTaskAdapter, 
     IDeleteTaskAdapter deleteTaskAdapter, 
-    IFindTaskAdapter findTaskAdapter) {
+    IFindTaskAdapter findTaskAdapter, 
+    IFindUserUseCase findUserUseCase) {
         this.createTaskAdapter = createTaskAdapter;
         this.updateTaskAdapter = updateTaskAdapter;
         this.deleteTaskAdapter = deleteTaskAdapter;
         this.findTaskAdapter = findTaskAdapter;
+        this.findUserUseCase = findUserUseCase;
     }
 
     @Override
@@ -79,8 +83,14 @@ public final class TaskService implements
 
     @Override
     public TaskModel create(CreateTaskDtoService dto) {
+        this.validUserId(dto.userId());
         var model = TaskMapperService.toTaskModel(dto);
         return this.createTaskAdapter.create(model);
+    }
+
+
+    private void validUserId(UUID userId){
+        this.findUserUseCase.findById(userId);
     }
 
 
