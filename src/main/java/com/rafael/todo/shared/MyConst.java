@@ -12,13 +12,15 @@ public enum MyConst {
     EMAIL_REGEX("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"),
     MAX_CATEGORY_NAME_LENGTH("50"),
     MIN_CATEGORY_NAME_LENGTH("2"),
-    HEX_COLOR_REGEX("^#[A-Fa-f0-9]{6}$");
+    HEX_COLOR_REGEX("^#[A-Fa-f0-9]{6}$"),
+    MAX_TASK_TITLE_LENGTH("150"),
+    MIN_TASK_TITLE_LENGTH("2"),
+    MAX_TASK_DESCRIPTION_LENGTH("2000");
 
     private final String value;
 
     MyConst(String value) {
         this.value = value;
     }
-
 
 }
