@@ -26,8 +26,11 @@ import com.rafael.todo.module.task.service.IDeleteTaskUseCase;
 import com.rafael.todo.module.task.service.IFindTaskUseCase;
 import com.rafael.todo.module.task.service.IUpdateTaskUseCase;
 
+import lombok.extern.java.Log;
+
 @RestController
 @RequestMapping("/tasks")
+@Log
 public final class TaskController {
 
     private final ICreateTaskUseCase createTaskUseCase;
@@ -50,9 +53,12 @@ public final class TaskController {
 
     @PostMapping
     public ResponseEntity<ResponseTaskDto> create(@RequestBody CreateTaskDto request) {
+        log.info("POST /tasks - Request received to create task: '" + request.title() + "' for user: " + request.userId());
         var model = this.createTaskUseCase.create(TaskMapperController.toServiceDto(request));
-        var uri = URI.create("/tasks/" + model.getId());
-        return ResponseEntity.created(uri).body(TaskMapperController.toResponseDto(model));
+        var response = TaskMapperController.toResponseDto(model);
+        var uri = URI.create("/tasks/" + response.id());
+        log.info("POST /tasks - Task successfully created with ID: " + response.id());
+        return ResponseEntity.created(uri).body(response);
     }
 
     @GetMapping
@@ -63,12 +69,15 @@ public final class TaskController {
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size
     ) {
+        log.info(String.format("GET /tasks - Listing tasks (userId: %s, categoryId: %s, status: %s, page: %d, size: %d)", userId, categoryId, status, page, size));
         var list = this.findTaskUseCase.findAll(userId, categoryId, status);
-        return ResponseEntity.ok(TaskMapperController.toPage(list, page, size));
+        var pages = TaskMapperController.toPage(list, page, size);
+        return ResponseEntity.ok(pages);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ResponseTaskDto> findById(@PathVariable Long id) {
+        log.info("GET /tasks/" + id + " - Fetching task by ID");
         var model = this.findTaskUseCase.findById(id);
         return ResponseEntity.ok(TaskMapperController.toResponseDto(model));
     }
@@ -78,13 +87,18 @@ public final class TaskController {
         @PathVariable Long id, 
         @RequestBody UpdateTaskDto request
     ) {
+        log.info("PUT /tasks/" + id + " - Request received to update task");
         var model = this.updateTaskUseCase.update(TaskMapperController.toServiceDto(id, request));
-        return ResponseEntity.ok(TaskMapperController.toResponseDto(model));
+        var response = TaskMapperController.toResponseDto(model);
+        log.info("PUT /tasks/" + id + " - Task updated successfully");
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
+        log.info("DELETE /tasks/" + id + " - Request received to delete task");
         this.deleteTaskUseCase.delete(id);
+        log.info("DELETE /tasks/" + id + " - Task deleted successfully");
         return ResponseEntity.noContent().build();
     }
 
