@@ -15,7 +15,9 @@ public enum MyConst {
     HEX_COLOR_REGEX("^#[A-Fa-f0-9]{6}$"),
     MAX_TASK_TITLE_LENGTH("150"),
     MIN_TASK_TITLE_LENGTH("2"),
-    MAX_TASK_DESCRIPTION_LENGTH("2000");
+    MAX_TASK_DESCRIPTION_LENGTH("2000"),
+    MAX_SUBTASK_TITLE_LENGTH("200"),
+    MIN_SUBTASK_TITLE_LENGTH("2");
 
     private final String value;
 
