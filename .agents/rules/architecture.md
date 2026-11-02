@@ -21,7 +21,8 @@ com.rafael.todo/
 └── module/                       # Módulos de funcionalidad (Vertical Slices)
     ├── user/                     # Módulo de usuarios
     ├── category/                 # Módulo de categorías
-    └── task/                     # Módulo de tareas (futuro)
+    ├── task/                     # Módulo de tareas
+    └── subtask/                  # Módulo de subtareas (futuro)
         ├── controller/           # Capa de Presentación (Controladores REST, DTOs, mappers)
         ├── service/              # Capa de Aplicación (Casos de uso / servicios, DTOs, mappers)
         ├── repository/           # Capa de Persistencia (Spring Data JPA, entity/ y adapter/)
@@ -36,7 +37,11 @@ com.rafael.todo/
 - **Comunicación e Integridad Inter-Modular (Regla de Oro)**:
   - **Prohibido**: Relaciones JPA directas (`@ManyToOne`, `@OneToMany`) entre entidades de diferentes módulos (por ejemplo: `CategoryEntity` o `TaskEntity` jamás referencian directamente a `UserEntity`).
   - **Persistencia por IDs Escalares**: Las tablas y entidades JPA solo almacenan el identificador escalar del módulo relacionado (`UUID userId`, `Long categoryId`).
-  - **Validación en Capa de Servicio**: Para evitar violaciones de clave foránea en base de datos (`DataIntegrityViolationException` / HTTP 500), el servicio del módulo inyecta la interfaz del caso de uso del otro módulo (ej. `IFindUserUseCase`) y valida la existencia antes de persistir (`findUserUseCase.findById(...)`), retornando un HTTP 404 claro si el recurso no existe.
+  - **Validación en Capa de Servicio (Simple o Múltiple)**: Para evitar violaciones de clave foránea en base de datos (`DataIntegrityViolationException` / HTTP 500), el servicio del módulo inyecta las interfaces de los casos de uso necesarios (ej. `TaskService` inyecta `IFindUserUseCase` e `IFindCategoryUseCase`) y valida la existencia antes de persistir (`findUserUseCase.findById(...)`, `findCategoryUseCase.findById(...)`), retornando un HTTP 404 claro si el recurso no existe.
+- **Aislamiento de Lógica de Negocio y Rol de Mappers**:
+  - **Prohibido en `controller` y `repository/adapter`**: Ambas capas periféricas deben estar estrictamente libres de lógica o reglas de decisión de negocio.
+  - **Mappers Responsabilidad del Asistente**: Los mappers (`*MapperController`, `*MapperService`, `*MapperRepository`) son generados y completados en su totalidad por el asistente para asegurar la transformación estructural completa de datos entre capas (Entity $\leftrightarrow$ Model, Controller DTOs $\leftrightarrow$ Service DTOs/Model), sin introducir lógica de negocio.
+  - **Lógica de Negocio en Dominio y Servicio**: La lógica de negocio reside exclusivamente en `Model/vo` (invariantes y transiciones) y `Service` (orquestación). El asistente proporciona esqueletos y contratos limpios sin asumir o inventar reglas de negocio no especificadas por el usuario.
 
 ---
 
@@ -67,7 +72,7 @@ com.rafael.todo/
 
 ### D. Capa de Persistencia (`repository`)
 - **Interfaz del repositorio**: `I<Modulo>Repository` que extiende `JpaRepository`.
-- **Filtros Dinámicos en JPQL**: Para consultas con parámetros opcionales (ej. `userId`), se utiliza la cláusula:
+- **Filtros Dinámicos en JPQL**: Para consultas con parámetros opcionales simples o combinados con `AND` (ej. `userId`, `categoryId`, `status`), se utiliza la cláusula:
   ```sql
   @Query("SELECT e FROM Entity e WHERE (:param IS NULL OR e.field = :param)")
   ```

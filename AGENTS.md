@@ -22,7 +22,7 @@ El proyecto adopta una **Arquitectura Modular por Capas Pragmática (Vertical Sl
 
 ### 1. Organización Modular
 - Cada contexto o funcionalidad de negocio se encapsula en su propio paquete:  
-  `com.rafael.todo.module.<nombre_modulo>` (por ejemplo: `user`, `category`, `task`).
+  `com.rafael.todo.module.<nombre_modulo>` (`user`, `category`, `task` completados; `subtask` siguiente).
 - Componentes transversales y compartidos residen en:  
   `com.rafael.todo.shared` (`DomainException`, `ErrorDto`, `GlobalExceptionController`, `MyConst`).
 - Configuración global (seguridad, beans globales) reside en:  
@@ -35,7 +35,7 @@ Dentro de cada módulo se organiza una estructura de capas clara y directa:
    - `DELETE`: Retorna siempre `ResponseEntity<Void>` con status 204 (`noContent().build()`).
 2. **`service`**: Casos de uso / lógica de negocio, DTOs de servicio y mappers a modelos de dominio.
 3. **`repository`**: Persistencia con Spring Data JPA. Contiene subpaquete `entity/` (entidades JPA), `adapter/` (adaptadores que conectan el repositorio con el servicio) y `mapper/` (mappers bidireccionales entre Entity y Model).
-   - Filtros opcionales en `@Query` con la cláusula JPQL `(:param IS NULL OR e.field = :param)`.
+   - Filtros opcionales en `@Query` con la cláusula JPQL dinámica: `(:param IS NULL OR e.field = :param)` (soporta combinación multi-filtro con `AND`).
 4. **`model`**: Modelos de dominio inmutables ricos y subpaquete **`vo/`** con Value Objects.
 5. **`enums`**: Enums propios del dominio del módulo.
 6. **`exception`**: Fábricas de excepciones de dominio que extienden de `DomainException`.
@@ -43,7 +43,14 @@ Dentro de cada módulo se organiza una estructura de capas clara y directa:
 ### 3. Regla de Oro: Relaciones y Validación Inter-Modular
 - **Cero Acoplamiento JPA entre Módulos**: Prohibido el uso de relaciones directas `@ManyToOne` o `@OneToMany` entre entidades de diferentes módulos.
 - **Persistencia por IDs Escalares**: Se almacenan únicamente los identificadores (`UUID userId`, `Long categoryId`).
-- **Validación Vía Casos de Uso**: La verificación de integridad referencial entre módulos se realiza en la capa de `Service` inyectando el caso de uso correspondiente (ej. `IFindUserUseCase`, `IFindCategoryUseCase`), evitando excepciones de base de datos (`DataIntegrityViolationException`) y garantizando respuestas HTTP 404 limpias.
+- **Validación Vía Casos de Uso (Simple y Múltiple)**: La verificación de integridad referencial entre módulos se realiza en la capa de `Service` inyectando el o los casos de uso correspondientes (ej. `TaskService` inyecta `IFindUserUseCase` e `IFindCategoryUseCase`), evitando excepciones de base de datos (`DataIntegrityViolationException`) y garantizando respuestas HTTP 404 limpias.
+
+### 4. Regla de Aislamiento de Lógica de Negocio y Rol de Mappers
+- **Prohibición de Lógica en Capas Periféricas**: Queda estrictamente prohibido introducir lógica de negocio o reglas de decisión en:
+  - **`controller`**: Responsable exclusivo de recibir peticiones HTTP, validar sintaxis básica, delegar al caso de uso y retornar códigos de respuesta / DTOs.
+  - **`repository / adapter`**: Responsable exclusivo de interactuar con Spring Data JPA y mapear datos.
+- **Mappers Responsabilidad del Asistente**: Los mappers (`*MapperController`, `*MapperService`, `*MapperRepository`) deben ser construidos y completados por el asistente, implementando la transformación estructural exhaustiva entre capas (Entity $\leftrightarrow$ Model, Controller DTOs $\leftrightarrow$ Service DTOs/Model), manteniéndose como transformaciones puras sin bifurcaciones de reglas de negocio.
+- **Lógica de Negocio Reservada (Dominio y Servicio)**: La lógica y reglas de negocio residen únicamente en el **Modelo/Value Objects** (invariantes y transiciones de estado) y en el **`Service`** (orquestación). El asistente no debe inventar ni asumir reglas de negocio no solicitadas; debe proveer las firmas, contratos y esqueletos técnicos, dejando que el usuario defina o guíe la lógica exacta.
 
 ---
 

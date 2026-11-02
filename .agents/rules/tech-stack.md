@@ -66,5 +66,8 @@ Este documento resume las convenciones técnicas y tecnológicas que rigen el pr
   - `MAX_CATEGORY_NAME_LENGTH("50")`
   - `MIN_CATEGORY_NAME_LENGTH("2")`
   - `HEX_COLOR_REGEX("^#[A-Fa-f0-9]{6}$")`
-  - *(Módulo Task)*: `MAX_TASK_TITLE_LENGTH("150")`, `MAX_SUBTASK_TITLE_LENGTH("200")`
+  - `MAX_TASK_TITLE_LENGTH("150")`
+  - `MIN_TASK_TITLE_LENGTH("2")`
+  - `MAX_TASK_DESCRIPTION_LENGTH("2000")`
+  - *(Módulo Subtask - Futuro)*: `MAX_SUBTASK_TITLE_LENGTH("200")`
 
