@@ -47,8 +47,11 @@ Antes de escribir código, el asistente debe emitir un mensaje estructurado con 
 
 2. **Fase de Implementación**:
    - Una vez aprobado el plan, crear y modificar los archivos correspondientes siguiendo los estándares de arquitectura modular y capas.
+   - **Regla de Esqueletos para Implementaciones**: En clases que implementan interfaces o contratos —específicamente **servicios (`*Service`)**, **adaptadores (`*Adapter`)** y **controladores (`*Controller`)**— el asistente debe generar exclusivamente el **esqueleto técnico** (anotaciones, inyección de dependencias por constructor con `@Autowired`, firmas de métodos y cuerpos retornando `null;` o vacíos), sin lógica interna a menos que el usuario lo solicite explícitamente.
+   - **Mappers Completos**: Los mappers (`*MapperController`, `*MapperService`, `*MapperRepository`) sí se implementan completos al ser transformaciones puras de datos.
    - No realizar cambios no especificados en el plan sin consultar previamente.
 
 3. **Fase de Verificación y Validación**:
-   - Compilar el proyecto con `./gradlew compileJava` o ejecutar tests con `./gradlew test` para asegurar que el código compila sin errores.
+   - **Prohibido ejecutar `.\gradlew.bat compileJava` o tareas de Gradle en terminal**, ya que causan demoras y bloqueos en el entorno.
+   - La verificación se realiza de forma estricta mediante **análisis estático de código** (verificación de firmas, tipos, importaciones y cumplimiento de interfaces).
    - Informar al usuario de los archivos generados y el estado final.
