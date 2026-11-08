@@ -17,7 +17,8 @@ public enum MyConst {
     MIN_TASK_TITLE_LENGTH("2"),
     MAX_TASK_DESCRIPTION_LENGTH("2000"),
     MAX_SUBTASK_TITLE_LENGTH("200"),
-    MIN_SUBTASK_TITLE_LENGTH("2");
+    MIN_SUBTASK_TITLE_LENGTH("2"),
+    MAX_TOKEN_HASH_LENGTH("255");
 
     private final String value;
 
