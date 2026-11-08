@@ -8,7 +8,7 @@ Este documento define los patrones estructurales y de diseño que rigen el proye
 
 El proyecto organiza el código en **módulos de negocio independientes (Vertical Slices)**, complementados por componentes transversales compartidos en `shared/`:
 
-```
+```text
 com.rafael.todo/
 ├── configuration/                # Configuración global (ej. SecurityConfiguration)
 │
@@ -19,15 +19,14 @@ com.rafael.todo/
 │   └── MyConst.java              # Enum centralizado de constantes (regex, longitudes)
 │
 └── module/                       # Módulos de funcionalidad (Vertical Slices)
-    ├── user/                     # Módulo de usuarios (completado)
-    ├── category/                 # Módulo de categorías (completado)
-    ├── task/                     # Módulo de tareas (completado)
-    └── subtask/                  # Módulo de subtareas (completado)
+    ├── user/                     # Módulo de usuarios (completado + tests)
+    ├── category/                 # Módulo de categorías (completado + tests)
+    ├── task/                     # Módulo de tareas (completado + tests)
+    └── subtask/                  # Módulo de subtareas (completado + tests)
         ├── controller/           # Capa de Presentación (Controladores REST, DTOs, mappers)
         ├── service/              # Capa de Aplicación (Casos de uso / servicios, DTOs, mappers)
-        ├── repository/           # Capa de Persistencia (Spring Data JPA, entity/ y adapter/)
-        ├── model/                # Modelo de Dominio inmutable y vo/ (Value Objects)
-        ├── enums/                # Enumeradores propios del módulo
+        ├── repository/           # Capa de Persistencia (Spring Data JPA, entity/, adapter/, mapper/)
+        ├── model/                # Modelo de Dominio inmutable, vo/ (Value Objects) y enums/
         └── exception/            # Fábricas de excepciones de dominio del módulo
 ```
 
@@ -37,7 +36,7 @@ com.rafael.todo/
 - **Comunicación e Integridad Inter-Modular (Regla de Oro)**:
   - **Prohibido**: Relaciones JPA directas (`@ManyToOne`, `@OneToMany`) entre entidades de diferentes módulos (por ejemplo: `CategoryEntity`, `TaskEntity` o `SubtaskEntity` jamás referencian directamente entidades de otros módulos).
   - **Persistencia por IDs Escalares**: Las tablas y entidades JPA solo almacenan el identificador escalar del módulo relacionado (`UUID userId`, `Long categoryId`, `Long taskId`).
-  - **Validación en Capa de Servicio (Simple o Múltiple)**: Para evitar violaciones de clave foránea en base de datos (`DataIntegrityViolationException` / HTTP 500), el servicio del módulo inyecta las interfaces de los casos de uso necesarios (ej. `TaskService` inyecta `IFindUserUseCase` e `IFindCategoryUseCase`; `SubtaskService` inyecta `IFindTaskUseCase`) y valida la existencia antes de persistir (`findUserUseCase.findById(...)`, `findCategoryUseCase.findById(...)`, `findTaskUseCase.findById(...)`), retornando un HTTP 404 claro si el recurso no existe.
+  - **Validación en Capa de Servicio (Simple o Múltiple)**: Para evitar violaciones de clave foránea en base de datos (`DataIntegrityViolationException` / HTTP 500), el servicio del módulo inyecta las interfaces de los casos de uso necesarios (`CategoryService` inyecta `IFindUserUseCase`; `TaskService` inyecta `IFindUserUseCase` e `IFindCategoryUseCase`; `SubtaskService` inyecta `IFindTaskUseCase`) y valida la existencia antes de persistir (`findUserUseCase.findById(...)`, `findCategoryUseCase.findById(...)`, `findTaskUseCase.findById(...)`), retornando un HTTP 404 claro si el recurso no existe.
 - **Aislamiento de Lógica, Rol de Mappers y Creación de Esqueletos**:
   - **Generación Exclusiva de Esqueletos para Implementaciones**: Al crear las clases que implementan interfaces o contratos —específicamente **servicios (`*Service`)**, **adaptadores (`*Adapter`)** y **controladores (`*Controller`)**— el asistente DEBE generar ÚNICAMENTE el esqueleto técnico (anotaciones, inyección de dependencias por constructor con `@Autowired`, firmas completas de métodos y cuerpos con `return null;` o vacíos). La lógica interna de estos métodos está reservada para el usuario o su solicitud explícita.
   - **Mappers Responsabilidad del Asistente**: Los mappers (`*MapperController`, `*MapperService`, `*MapperRepository`) son generados y completados en su totalidad por el asistente para asegurar la transformación estructural completa de datos entre capas (Entity $\leftrightarrow$ Model, Controller DTOs $\leftrightarrow$ Service DTOs/Model), sin introducir lógica de negocio ni bifurcaciones de reglas.
@@ -48,7 +47,7 @@ com.rafael.todo/
 ## 2. Capas Dentro de Cada Módulo
 
 ### A. Capa de Dominio (`model`, `enums`, `exception`)
-- **Modelos Inmutables (`Model.java`)**:
+- **Modelos Inmutables (`*Model.java`)**:
   - Clases `final` con todos los atributos `final`.
   - Constructor privado con `@AllArgsConstructor(access = AccessLevel.PRIVATE)`.
   - Métodos estáticos de fábrica:
@@ -60,7 +59,7 @@ com.rafael.todo/
 ### B. Value Objects (`model/vo`)
 - Implementados estrictamente con **`record`s de Java 25**.
 - **Auto-validación (Invariantes)**: La validación se ejecuta en el constructor compacto. Es imposible instanciar un Value Object con estado inválido.
-- Se apoyan en las constantes de [`MyConst`](file:///d:/Documentos/VS/frameworks/Spring%20boot/Todo/src/main/java/com/rafael/todo/shared/MyConst.java) y lanzan las excepciones específicas del paquete `exception/`.
+- Se apoyan en las constantes de [`MyConst`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/MyConst.java) y lanzan las excepciones específicas del paquete `exception/`.
 
 ### C. Excepciones de Dominio (`exception`)
 - Clases `public final class ... extends DomainException`.
@@ -96,5 +95,16 @@ com.rafael.todo/
 ---
 
 ## 3. Manejo Global de Errores (`shared`)
-- Toda excepción que herede de `DomainException` es capturada de forma automática por `GlobalExceptionController` (`@RestControllerAdvice`).
-- La respuesta HTTP devuelve un JSON estándar con [`ErrorDto`](file:///d:/Documentos/VS/frameworks/Spring%20boot/Todo/src/main/java/com/rafael/todo/shared/ErrorDto.java) (`code`, `message`, `status`), garantizando consistencia en todos los módulos de la aplicación.
+- Toda excepción que herede de `DomainException` es capturada de forma automática por [`GlobalExceptionController`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/GlobalExceptionController.java) (`@RestControllerAdvice`).
+- La respuesta HTTP devuelve un JSON estándar con [`ErrorDto`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/ErrorDto.java) (`code`, `message`, `status`), garantizando consistencia en todos los módulos de la aplicación.
+
+---
+
+## 4. Arquitectura de Pruebas Unitarias (`src/test/java`)
+Cada módulo replica su estructura bajo `src/test/java/com/rafael/todo/module/<modulo>/` con 6 suites:
+- `model/vo/*ValueObjectsTest.java`
+- `model/*ModelTest.java`
+- `mapper/*MappersTest.java`
+- `service/*ServiceTest.java`
+- `repository/*AdapterTest.java`
+- `controller/*ControllerTest.java`

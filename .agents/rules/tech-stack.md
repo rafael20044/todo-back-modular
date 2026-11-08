@@ -35,7 +35,7 @@ Este documento resume las convenciones técnicas y tecnológicas que rigen el pr
   Esto permite que Spring Data y la base de datos gestionen el filtrado en una sola query sin necesidad de construir `CriteriaBuilder` o múltiples métodos en el repositorio.
 
 ### Configuración de Seguridad (Spring Security)
-- Archivo de configuración: [`SecurityConfiguration.java`](file:///d:/Documentos/VS/frameworks/Spring%20boot/Todo/src/main/java/com/rafael/todo/configuration/SecurityConfiguration.java).
+- Archivo de configuración: [`SecurityConfiguration.java`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/configuration/SecurityConfiguration.java).
 - Modo de desarrollo actual:
   - `csrf.disable()` para permitir pruebas de endpoints REST sin tokens CSRF.
   - `authorizeHttpRequests(auth -> auth.anyRequest().permitAll())` para libre acceso a la API durante desarrollo.
@@ -43,6 +43,13 @@ Este documento resume las convenciones técnicas y tecnológicas que rigen el pr
 - **Context Path**:
   - `server.servlet.context-path: /api` configurado en `application.yaml`.
   - La URL para acceder a la consola H2 es: **`http://localhost:8080/api/h2-console`**.
+
+---
+
+## 🧪 Estándares de Testing (JUnit 5, Mockito & MockMvc)
+- **JUnit Jupiter (`@Nested`, `@DisplayName`, `@ParameterizedTest`, `@NullAndEmptySource`, `@ValueSource`)**: Para pruebas expresivas de Value Objects, Modelos y Mappers.
+- **Mockito (`@ExtendWith(MockitoExtension.class)`, `@Mock`, `@InjectMocks`)**: Para aislar casos de uso (`*ServiceTest`) y adaptadores de persistencia (`*AdapterTest`) sin levantar el contexto de Spring.
+- **MockMvc Standalone (`MockMvcBuilders.standaloneSetup(controller).setControllerAdvice(new GlobalExceptionController()).build()`)**: Para probar controladores REST (`*ControllerTest`) y el mapeo de `DomainException` a `ErrorDto` de manera rápida y determinista.
 
 ---
 
@@ -57,7 +64,7 @@ Este documento resume las convenciones técnicas y tecnológicas que rigen el pr
 ---
 
 ## 📦 Constantes Compartidas (`MyConst`)
-- Todas las restricciones de longitud y expresiones regulares compartidas se definen centralizadamente en el enum [`MyConst.java`](file:///d:/Documentos/VS/frameworks/Spring%20boot/Todo/src/main/java/com/rafael/todo/shared/MyConst.java):
+- Todas las restricciones de longitud y expresiones regulares compartidas se definen centralizadamente en el enum [`MyConst.java`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/MyConst.java):
   - `MAX_EMAIL_LENGTH("255")`
   - `EMAIL_REGEX("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")`
   - `MAX_NAME_LENGTH("100")`
@@ -75,4 +82,4 @@ Este documento resume las convenciones técnicas y tecnológicas que rigen el pr
 ---
 
 ## 🚫 Restricción de Entorno y Terminal
-- **Prohibido ejecutar `.\gradlew.bat compileJava` o tareas de Gradle en terminal**: Para evitar bloqueos y demoras por el daemon de Gradle o el profile de PowerShell en Antigravity. Las validaciones se realizan exclusivamente por análisis estático.
+- **Prohibido ejecutar comandos de Gradle (`.\gradlew.bat compileJava`, `.\gradlew.bat test`, `.\gradlew.bat build`) en terminal**: Para evitar bloqueos por el daemon de Gradle, falta de `JAVA_HOME` en el sandbox o políticas de seguridad del entorno. Las validaciones se realizan exclusivamente por análisis estático.
