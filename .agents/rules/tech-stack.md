@@ -69,5 +69,10 @@ Este documento resume las convenciones técnicas y tecnológicas que rigen el pr
   - `MAX_TASK_TITLE_LENGTH("150")`
   - `MIN_TASK_TITLE_LENGTH("2")`
   - `MAX_TASK_DESCRIPTION_LENGTH("2000")`
-  - *(Módulo Subtask - Futuro)*: `MAX_SUBTASK_TITLE_LENGTH("200")`
+  - `MAX_SUBTASK_TITLE_LENGTH("200")`
+  - `MIN_SUBTASK_TITLE_LENGTH("2")`
 
+---
+
+## 🚫 Restricción de Entorno y Terminal
+- **Prohibido ejecutar `.\gradlew.bat compileJava` o tareas de Gradle en terminal**: Para evitar bloqueos y demoras por el daemon de Gradle o el profile de PowerShell en Antigravity. Las validaciones se realizan exclusivamente por análisis estático.

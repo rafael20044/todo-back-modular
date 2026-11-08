@@ -22,7 +22,7 @@ El proyecto adopta una **Arquitectura Modular por Capas Pragmática (Vertical Sl
 
 ### 1. Organización Modular
 - Cada contexto o funcionalidad de negocio se encapsula en su propio paquete:  
-  `com.rafael.todo.module.<nombre_modulo>` (`user`, `category`, `task` completados; `subtask` siguiente).
+  `com.rafael.todo.module.<nombre_modulo>` (`user`, `category`, `task`, `subtask` completados).
 - Componentes transversales y compartidos residen en:  
   `com.rafael.todo.shared` (`DomainException`, `ErrorDto`, `GlobalExceptionController`, `MyConst`).
 - Configuración global (seguridad, beans globales) reside en:  
@@ -42,14 +42,18 @@ Dentro de cada módulo se organiza una estructura de capas clara y directa:
 
 ### 3. Regla de Oro: Relaciones y Validación Inter-Modular
 - **Cero Acoplamiento JPA entre Módulos**: Prohibido el uso de relaciones directas `@ManyToOne` o `@OneToMany` entre entidades de diferentes módulos.
-- **Persistencia por IDs Escalares**: Se almacenan únicamente los identificadores (`UUID userId`, `Long categoryId`).
-- **Validación Vía Casos de Uso (Simple y Múltiple)**: La verificación de integridad referencial entre módulos se realiza en la capa de `Service` inyectando el o los casos de uso correspondientes (ej. `TaskService` inyecta `IFindUserUseCase` e `IFindCategoryUseCase`), evitando excepciones de base de datos (`DataIntegrityViolationException`) y garantizando respuestas HTTP 404 limpias.
+- **Persistencia por IDs Escalares**: Se almacenan únicamente los identificadores (`UUID userId`, `Long categoryId`, `Long taskId`).
+- **Validación Vía Casos de Uso (Simple y Múltiple)**: La verificación de integridad referencial entre módulos se realiza en la capa de `Service` inyectando el o los casos de uso correspondientes (ej. `TaskService` inyecta `IFindUserUseCase` e `IFindCategoryUseCase`; `SubtaskService` inyecta `IFindTaskUseCase`), evitando excepciones de base de datos (`DataIntegrityViolationException`) y garantizando respuestas HTTP 404 limpias.
 
-### 4. Regla de Aislamiento de Lógica de Negocio y Rol de Mappers
-- **Prohibición de Lógica en Capas Periféricas**: Queda estrictamente prohibido introducir lógica de negocio o reglas de decisión en:
-  - **`controller`**: Responsable exclusivo de recibir peticiones HTTP, validar sintaxis básica, delegar al caso de uso y retornar códigos de respuesta / DTOs.
-  - **`repository / adapter`**: Responsable exclusivo de interactuar con Spring Data JPA y mapear datos.
-- **Mappers Responsabilidad del Asistente**: Los mappers (`*MapperController`, `*MapperService`, `*MapperRepository`) deben ser construidos y completados por el asistente, implementando la transformación estructural exhaustiva entre capas (Entity $\leftrightarrow$ Model, Controller DTOs $\leftrightarrow$ Service DTOs/Model), manteniéndose como transformaciones puras sin bifurcaciones de reglas de negocio.
+### 4. Regla de Aislamiento de Lógica, Rol de Mappers y Esqueletos Técnicos
+- **Generación Exclusiva de Esqueletos para Implementaciones**:
+  Al crear las clases que implementan interfaces o contratos —específicamente **servicios / casos de uso (`*Service`)**, **adaptadores (`*Adapter`)** y **controladores (`*Controller`)**— el asistente DEBE generar ÚNICAMENTE el esqueleto técnico:
+  - Declaración de clase y anotaciones pertinentes (`@Service`, `@Component`, `@RestController`, `@Log`).
+  - Inyección de dependencias por constructor con `@Autowired`.
+  - Firmas completas de los métodos requeridos por las interfaces o rutas HTTP (`@PostMapping`, `@GetMapping`, etc.).
+  - **Cuerpos de métodos vacíos o retornando `null;` (`return null;`)**.
+  - Queda estrictamente prohibido que el asistente implemente la lógica interna de estos métodos a menos que el usuario lo solicite de manera explícita.
+- **Mappers Responsabilidad del Asistente**: Los mappers (`*MapperController`, `*MapperService`, `*MapperRepository`) deben ser construidos y completados en su totalidad por el asistente, implementando la transformación estructural exhaustiva entre capas (Entity $\leftrightarrow$ Model, Controller DTOs $\leftrightarrow$ Service DTOs/Model), manteniéndose como transformaciones puras sin bifurcaciones de reglas de negocio.
 - **Lógica de Negocio Reservada (Dominio y Servicio)**: La lógica y reglas de negocio residen únicamente en el **Modelo/Value Objects** (invariantes y transiciones de estado) y en el **`Service`** (orquestación). El asistente no debe inventar ni asumir reglas de negocio no solicitadas; debe proveer las firmas, contratos y esqueletos técnicos, dejando que el usuario defina o guíe la lógica exacta.
 
 ---
@@ -69,6 +73,11 @@ Dentro de cada módulo se organiza una estructura de capas clara y directa:
 
 ## 🪵 Trazabilidad y Logs
 - Uso de la anotación `@Log` de Lombok (`import lombok.extern.java.Log;`) en controladores, servicios, adaptadores y manejador global de excepciones para monitorear el flujo de la aplicación desde la terminal.
+
+---
+
+## 🚫 Restricción de Terminal
+- Queda estrictamente prohibido ejecutar `.\gradlew.bat compileJava` o comandos de compilación continua de Gradle desde la terminal para evitar bloqueos del entorno/daemon. Toda verificación se realiza mediante análisis estático de código.
 
 ---
 
