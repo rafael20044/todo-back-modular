@@ -11,5 +11,6 @@ public interface IFindUserUseCase {
 
     List<UserModel> findAll();
 
+    UserModel findByEmail(String emauil);
 
 }

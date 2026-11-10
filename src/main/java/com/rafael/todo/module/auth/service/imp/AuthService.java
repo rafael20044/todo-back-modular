@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import com.rafael.todo.module.auth.exception.AuthCredentialsException;
 import com.rafael.todo.module.auth.model.RefreshTokenModel;
 import com.rafael.todo.module.auth.repository.adapter.ICreateRefreshTokenAdapter;
 import com.rafael.todo.module.auth.repository.adapter.IDeleteRefreshTokenAdapter;
@@ -45,8 +46,7 @@ public final class AuthService implements
             IUpdateRefreshTokenAdapter updateRefreshTokenAdapter,
             IDeleteRefreshTokenAdapter deleteRefreshTokenAdapter,
             IFindUserUseCase findUserUseCase,
-            PasswordEncoder passwordEncoder
-    ) {
+            PasswordEncoder passwordEncoder) {
         this.createRefreshTokenAdapter = createRefreshTokenAdapter;
         this.findRefreshTokenAdapter = findRefreshTokenAdapter;
         this.updateRefreshTokenAdapter = updateRefreshTokenAdapter;
@@ -57,6 +57,15 @@ public final class AuthService implements
 
     @Override
     public AuthTokensDtoService login(LoginDtoService dto) {
+        var model = this.findUserUseCase.findByEmail(dto.email());
+        if (!model.getAccountValue()) {
+            throw AuthCredentialsException.accountDisabled();
+        }
+
+        if (!passwordEncoder.matches(dto.password(), model.getPasswordValue())) {
+            throw AuthCredentialsException.invalidCredentials();
+        }
+
         return null;
     }
 
@@ -91,4 +100,3 @@ public final class AuthService implements
     }
 
 }
-

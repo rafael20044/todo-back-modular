@@ -102,4 +102,9 @@ public final class UserService implements
         return this.createUserAdapter.create(model);
     }
 
+    @Override
+    public UserModel findByEmail(String email) {
+        return this.findUserAdapter.findByEmail(email).orElseThrow(() -> UserEmailException.notFound());
+    }
+
 }

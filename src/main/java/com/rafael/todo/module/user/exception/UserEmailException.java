@@ -17,6 +17,9 @@ public final class UserEmailException extends DomainException {
     private static final String CODE_EMAIL_ALREADY_EXISTS = "user.email.already.exists";
     private static final String MSG_EMAIL_ALREADY_EXISTS = "User with this email already exists";
 
+    private static final String CODE_EMAIL_NOT_FOUND = "user.email.not.found";
+    private static final String MSG_EMAIL_NOT_FOUND = "User with this email does not exists";
+
     private UserEmailException(String code, String message, int statusCode) {
         super(code, message, statusCode);
     }
@@ -36,6 +39,10 @@ public final class UserEmailException extends DomainException {
 
     public static UserEmailException alreadyExists() {
         return new UserEmailException(CODE_EMAIL_ALREADY_EXISTS, MSG_EMAIL_ALREADY_EXISTS, 409);
+    }
+
+    public static UserEmailException notFound() {
+        return new UserEmailException(CODE_EMAIL_NOT_FOUND, CODE_EMAIL_NOT_FOUND, 404);
     }
 
 }
