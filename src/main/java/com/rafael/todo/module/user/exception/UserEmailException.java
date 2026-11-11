@@ -42,7 +42,7 @@ public final class UserEmailException extends DomainException {
     }
 
     public static UserEmailException notFound() {
-        return new UserEmailException(CODE_EMAIL_NOT_FOUND, CODE_EMAIL_NOT_FOUND, 404);
+        return new UserEmailException(CODE_EMAIL_NOT_FOUND, MSG_EMAIL_NOT_FOUND, 404);
     }
 
 }
