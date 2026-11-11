@@ -1,6 +1,7 @@
 package com.rafael.todo.module.auth.service.imp;
 
 import com.rafael.todo.module.auth.exception.AuthCredentialsException;
+import com.rafael.todo.module.auth.exception.RefreshTokenException;
 import com.rafael.todo.module.auth.model.RefreshTokenModel;
 import com.rafael.todo.module.auth.repository.adapter.ICreateRefreshTokenAdapter;
 import com.rafael.todo.module.auth.repository.adapter.IDeleteRefreshTokenAdapter;
@@ -22,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -89,34 +91,56 @@ public class AuthService implements
 
     @Override
     public AuthTokensDtoService refresh(RefreshTokenRequestDtoService dto) {
-        return null;
+        var token = findByTokenHash(dto.refreshToken());
+        if (token.getRevoked().isRevoked()) {
+            throw RefreshTokenException.revoked();
+        }
+        if (token.getExpiresAtValue().isBefore(LocalDateTime.now())) {
+            throw RefreshTokenException.expired();
+        }
+
+        token = token.revoke();
+        var user = this.findUserUseCase.findById(token.getUserIdValue());
+        var accessToken = this.jwtService.generateAccessToken(
+                user.getIdValue(),
+                user.getEmailValue(),
+                user.getRoleValue().getValue()
+        );
+        var refreshToken = this.jwtService.generateRefreshToken();
+        var expireAt = this.jwtService.calculateRefreshTokenExpiration();
+
+        var refreshTokenModel = RefreshTokenMapperService.toRefreshTokenModel(
+                new CreateRefreshTokenDtoService(user.getIdValue(), refreshToken, expireAt)
+        );
+        this.updateRefreshTokenAdapter.update(token);
+        this.createRefreshTokenAdapter.create(refreshTokenModel);
+        
+        return new AuthTokensDtoService(accessToken, refreshToken, expireAt);
     }
 
     @Override
     public void logoutAllByUserId(UUID userId) {
+        
     }
 
 
     @Override
     public RefreshTokenModel findByTokenHash(String tokenHash) {
-        return null;
+        return findRefreshTokenAdapter.findByTokenHash(tokenHash).orElseThrow(() -> RefreshTokenException.notFound());
     }
 
     @Override
     public RefreshTokenModel findById(Long id) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findById'");
+        return findRefreshTokenAdapter.findById(id).orElseThrow(() -> RefreshTokenException.notFound());
     }
 
     @Override
     public List<RefreshTokenModel> findAllFiltered(UUID userId, Boolean isRevoked) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'findAllFiltered'");
+       return this.findRefreshTokenAdapter.findAllFiltered(userId, isRevoked);
     }
 
     @Override
     public void logout(String refreshToken) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'logout'");
     }
+
 }
