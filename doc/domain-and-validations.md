@@ -23,18 +23,21 @@ Definidas en [`MyConst.java`](../src/main/java/com/rafael/todo/shared/MyConst.ja
 | `MAX_TASK_DESCRIPTION_LENGTH` | `"2000"` | Longitud máxima de la descripción de tarea |
 | `MIN_SUBTASK_TITLE_LENGTH` | `"2"` | Longitud mínima del título de subtarea |
 | `MAX_SUBTASK_TITLE_LENGTH` | `"200"` | Longitud máxima del título de subtarea |
+| `MAX_TOKEN_HASH_LENGTH` | `"255"` | Longitud máxima del hash/valor del refresh token |
+| `COOKIE_NAME` | `"token"` | Nombre de la cookie `HttpOnly` para el refresh token |
 
 ---
 
 ## 2. Patrón de Modelos de Dominio Inmutables (*Copy-on-Write*)
 
-Todos los modelos (`UserModel`, `CategoryModel`, `TaskModel`, `SubtaskModel`) cumplen las siguientes reglas:
+Todos los modelos (`RefreshTokenModel`, `UserModel`, `CategoryModel`, `TaskModel`, `SubtaskModel`) cumplen las siguientes reglas:
 1. **Inmutabilidad total**: Clase declarada `public final class` con todos sus atributos `private final`.
 2. **Constructor privado**: `@AllArgsConstructor(access = AccessLevel.PRIVATE)` para obligar el uso de fábricas estáticas.
 3. **Fábricas estáticas**:
-   - `create(...)`: Instancia un nuevo objeto de dominio aplicando valores por defecto (ej. `UserId.random()`, `UserRole.user()`, `TaskStatus.pending()`, `SubtaskCompleted.pending()`, timestamps `LocalDateTime.now()`).
+   - `create(...)`: Instancia un nuevo objeto de dominio aplicando valores por defecto (ej. `RefreshTokenRevoked.active()`, `UserId.random()`, `UserRole.user()`, `TaskStatus.pending()`, `SubtaskCompleted.pending()`, timestamps `LocalDateTime.now()`).
    - `reconstitute(...)`: Reconstruye el objeto desde la base de datos preservando su `id` y timestamps históricos sin alterarlos.
-4. **Mutaciones por copia (`copy(...)`)**: Métodos expresivos de negocio que devuelven una nueva instancia con `updatedAt` actualizado:
+4. **Mutaciones por copia (`copy(...)`)**: Métodos expresivos de negocio que devuelven una nueva instancia inmutable:
+   - `RefreshTokenModel`: `revoke()`, `isExpired()`, `validateActive()`.
    - `UserModel`: `changeName(...)`, `changePassword(...)`, `changeRole(...)`, `activate()`, `deactivate()`.
    - `CategoryModel`: `changeName(...)`, `changeColor(...)`.
    - `TaskModel`: `changeTitle(...)`, `changeDescription(...)`, `changeCategory(...)`, `changePriority(...)`, `changeDueDate(...)`, `changeStatus(...)`, `markCompleted()`, `markPending()`.
@@ -44,18 +47,28 @@ Todos los modelos (`UserModel`, `CategoryModel`, `TaskModel`, `SubtaskModel`) cu
 
 ## 3. Catálogo de Value Objects y Validaciones por Módulo
 
-### 3.1. Módulo `user`
+### 3.1. Módulo `auth`
+
+| Value Object | Tipo Interno | Reglas / Invariantes en Constructor Compacto | Excepción Asociada |
+| :--- | :--- | :--- | :--- |
+| `RefreshTokenId` | `Long` | No nulo y $> 0$. Soporta parseo desde `String`. | `RefreshTokenIdException` (400 / 404) |
+| `RefreshTokenUserId` | `UUID` | No nulo. Soporta parseo desde `String` con formato UUID válido. | `RefreshTokenUserIdException` (400) |
+| `RefreshTokenHash` | `String` | No nulo/vacío, se aplica `trim()`, longitud $\le 255$ (`MAX_TOKEN_HASH_LENGTH`). | `RefreshTokenException` (400 / 401 / 404) |
+| `RefreshTokenExpiration` | `LocalDateTime` | No nulo. Soporta parseo desde ISO `String` y método `isExpired()`. | `RefreshTokenExpirationException` (400) |
+| `RefreshTokenRevoked` | `boolean` | Estado de revocación (`active()`, `revoked()`). `revoke()` falla si ya está revocado. | `RefreshTokenException` (400 / 401) |
+
+### 3.2. Módulo `user`
 
 | Value Object | Tipo Interno | Reglas / Invariantes en Constructor Compacto | Excepción Asociada |
 | :--- | :--- | :--- | :--- |
 | `UserId` | `UUID` | No puede ser `null`. Incluye fábrica `UserId.random()`. | `UserUuidException` (400 / 404) |
 | `UserName` | `String` | No nulo/vacío, se aplica `trim()`, longitud entre `2` y `100` caracteres. | `UserNameException` (400) |
 | `UserEmail` | `String` | No nulo/vacío, `trim()`, longitud $\le 255$, debe cumplir `EMAIL_REGEX`. | `UserEmailException` (400 / 409) |
-| `UserPassword` | `String` | No nulo/vacío, longitud mínima de `8` caracteres. | `UserPasswordException` (400) |
+| `UserPassword` | `String` | No nulo/vacío, longitud mínima de `8` caracteres en `fromRaw(...)`. | `UserPasswordException` (400) |
 | `UserRole` | `UserRoleEnum` | No nulo. Soporta creación desde `String` (`ROLE_USER`, `ROLE_ADMIN`). | `UserRoleException` (400) |
 | `UserAccount` | `boolean` | Estado activo/inactivo de la cuenta (`active()`, `inactive()`). | `UserAccountException` |
 
-### 3.2. Módulo `category`
+### 3.3. Módulo `category`
 
 | Value Object | Tipo Interno | Reglas / Invariantes en Constructor Compacto | Excepción Asociada |
 | :--- | :--- | :--- | :--- |
@@ -64,7 +77,7 @@ Todos los modelos (`UserModel`, `CategoryModel`, `TaskModel`, `SubtaskModel`) cu
 | `CategoryName` | `String` | No nulo/vacío, `trim()`, longitud entre `2` y `50` caracteres. | `CategoryNameException` (400 / 409) |
 | `CategoryColor` | `String` | Si es nulo o vacío asigna `#3B82F6`; debe cumplir `HEX_COLOR_REGEX`. | `CategoryColorException` (400) |
 
-### 3.3. Módulo `task`
+### 3.4. Módulo `task`
 
 | Value Object | Tipo Interno | Reglas / Invariantes en Constructor Compacto | Excepción Asociada |
 | :--- | :--- | :--- | :--- |
@@ -77,7 +90,7 @@ Todos los modelos (`UserModel`, `CategoryModel`, `TaskModel`, `SubtaskModel`) cu
 | `TaskPriority` | `TaskPriorityEnum` | No nulo. Valores: `LOW`, `MEDIUM`, `HIGH`, `URGENT` (por defecto `MEDIUM`). | `TaskPriorityException` (400) |
 | `TaskDueDate` | `LocalDateTime` | Opcional (`null` permitido). | — |
 
-### 3.4. Módulo `subtask`
+### 3.5. Módulo `subtask`
 
 | Value Object | Tipo Interno | Reglas / Invariantes en Constructor Compacto | Excepción Asociada |
 | :--- | :--- | :--- | :--- |
@@ -86,4 +99,3 @@ Todos los modelos (`UserModel`, `CategoryModel`, `TaskModel`, `SubtaskModel`) cu
 | `SubtaskTitle` | `String` | No nulo/vacío, `trim()`, longitud entre `2` y `200` caracteres. | `SubtaskTitleException` (400) |
 | `SubtaskCompleted` | `boolean` | Estado booleano (`completed()`, `pending()`). | — |
 | `SubtaskPosition` | `Integer` | Si es `null` asigna `0`; no puede ser negativo ($< 0$). | `SubtaskPositionException` (400) |
-

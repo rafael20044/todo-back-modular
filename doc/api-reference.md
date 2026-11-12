@@ -9,7 +9,63 @@ Todos los endpoints están publicados bajo el prefijo global **`/api`** configur
 
 ---
 
-## 1. Módulo de Usuarios (`/api/users`)
+## 1. Módulo de Autenticación (`/api/auth`)
+
+Controlador: [`AuthController.java`](../src/main/java/com/rafael/todo/module/auth/controller/AuthController.java)
+
+| Método | Endpoint | Descripción | Status Éxito |
+| :---: | :--- | :--- | :---: |
+| `POST` | `/api/auth/login` | Autentica al usuario, devuelve `accessToken` y asigna cookie `HttpOnly` (`token`) | `200 OK` |
+| `POST` | `/api/auth/refresh` | Rota el refresh token leyendo la cookie `token` y emite un nuevo `accessToken` | `200 OK` |
+| `POST` | `/api/auth/logout` | Elimina el refresh token actual y limpia la cookie `token` (`Max-Age=0`) | `204 No Content` |
+| `DELETE` | `/api/auth/logout/{userId}` | Cierra todas las sesiones activas de un usuario por su `UUID` | `204 No Content` |
+| `GET` | `/api/auth/tokens` | Lista refresh tokens paginados con filtros opcionales (`userId`, `isRevoked`) | `200 OK` |
+| `GET` | `/api/auth/tokens/{id}` | Obtiene el detalle de un refresh token por su `id` (`Long`) | `200 OK` |
+
+### `POST /api/auth/login` — Iniciar Sesión
+**Request Body (`LoginDto`):**
+```json
+{
+  "email": "rafael@example.com",
+  "password": "Password123!"
+}
+```
+
+**Response Header (`Set-Cookie`):**
+```http
+Set-Cookie: token=9b1deb4d-3b7d-4bad-9bdd-2b0d7b3dcb6d; Path=/; Max-Age=604800; HttpOnly; SameSite=Strict
+```
+
+**Response Body (`200 OK` - `ResponseAuthDto`):**
+```json
+{
+  "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+> Nota: El `refreshToken` nunca se expone en el cuerpo JSON; viaja exclusivamente en la cookie `HttpOnly` llamada `token`.
+
+### `POST /api/auth/refresh` — Renovar Access Token (Rotación)
+Requiere el envío de la cookie `token`. Revoca el refresh token anterior en base de datos, emite un nuevo refresh token en la cabecera `Set-Cookie` y devuelve un nuevo `accessToken` en el cuerpo JSON (`200 OK`).
+
+### `POST /api/auth/logout` — Cerrar Sesión Actual
+Requiere la cookie `token`. Elimina el registro en base de datos y responde `204 No Content` con cabecera `Set-Cookie: token=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict`.
+
+### `GET /api/auth/tokens` — Listar Sesiones / Refresh Tokens
+Parámetros opcionales: `userId` (`UUID`), `isRevoked` (`Boolean`), `page` (`0`), `size` (`10`).
+**Elemento en `content` (`ResponseRefreshTokenDto`):**
+```json
+{
+  "id": 1,
+  "userId": "550e8400-e29b-41d4-a716-446655440000",
+  "expiresAt": "2026-11-19T17:00:00",
+  "isRevoked": false,
+  "createdAt": "2026-11-12T17:00:00"
+}
+```
+
+---
+
+## 2. Módulo de Usuarios (`/api/users`)
 
 Controlador: [`UserController.java`](../src/main/java/com/rafael/todo/module/user/controller/UserController.java)
 
@@ -57,7 +113,7 @@ Controlador: [`UserController.java`](../src/main/java/com/rafael/todo/module/use
 
 ---
 
-## 2. Módulo de Categorías (`/api/categories`)
+## 3. Módulo de Categorías (`/api/categories`)
 
 Controlador: [`CategoryController.java`](../src/main/java/com/rafael/todo/module/category/controller/CategoryController.java)
 
@@ -102,7 +158,7 @@ Controlador: [`CategoryController.java`](../src/main/java/com/rafael/todo/module
 
 ---
 
-## 3. Módulo de Tareas (`/api/tasks`)
+## 4. Módulo de Tareas (`/api/tasks`)
 
 Controlador: [`TaskController.java`](../src/main/java/com/rafael/todo/module/task/controller/TaskController.java)
 
@@ -168,7 +224,7 @@ Controlador: [`TaskController.java`](../src/main/java/com/rafael/todo/module/tas
 
 ---
 
-## 4. Módulo de Subtareas (`/api/subtasks`)
+## 5. Módulo de Subtareas (`/api/subtasks`)
 
 Controlador: [`SubtaskController.java`](../src/main/java/com/rafael/todo/module/subtask/controller/SubtaskController.java)
 
@@ -216,7 +272,7 @@ Controlador: [`SubtaskController.java`](../src/main/java/com/rafael/todo/module/
 
 ---
 
-## 5. Estructura de Respuestas Paginadas y Errores
+## 6. Estructura de Respuestas Paginadas y Errores
 
 ### Estructura de Página (`Page<Response*Dto>`)
 ```json
@@ -237,7 +293,7 @@ Controlador: [`SubtaskController.java`](../src/main/java/com/rafael/todo/module/
 ```
 
 ### Estructura Estándar de Error (`ErrorDto`)
-Cualquier error de negocio (`400`, `404`, `409`) o de servidor (`500`) retorna la estructura definida en [`ErrorDto.java`](../src/main/java/com/rafael/todo/shared/ErrorDto.java):
+Cualquier error de negocio (`400`, `401`, `403`, `404`, `409`) o de servidor (`500`) retorna la estructura definida en [`ErrorDto.java`](../src/main/java/com/rafael/todo/shared/ErrorDto.java):
 
 ```json
 {
@@ -246,4 +302,3 @@ Cualquier error de negocio (`400`, `404`, `409`) o de servidor (`500`) retorna l
   "status": 404
 }
 ```
-

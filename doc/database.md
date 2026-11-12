@@ -4,7 +4,7 @@ El esquema de base de datos está gobernado exclusivamente por **Flyway** (`spri
 
 ---
 
-## 1. Configuración de Persistencia (`application.yaml`)
+## 1. Configuración de Persistencia y JWT (`application.yaml`)
 
 | Propiedad | Valor | Descripción |
 | :--- | :--- | :--- |
@@ -14,6 +14,9 @@ El esquema de base de datos está gobernado exclusivamente por **Flyway** (`spri
 | `spring.h2.console.enabled` | `true` | Habilita la consola web en `http://localhost:8080/api/h2-console` |
 | `spring.jpa.hibernate.ddl-auto` | `none` | Desactiva la generación automática de tablas por Hibernate |
 | `spring.flyway.enabled` | `true` | Ejecuta las migraciones SQL de `classpath:db/migration` al arrancar |
+| `jwt.secret` | `${JWT_SECRET:...}` | Clave secreta HMAC256 leída por `ApplicationConfiguration` |
+| `jwt.access-token-expiration-minutes` | `15` | Duración del Access Token en minutos |
+| `jwt.refresh-token-expiration-days` | `7` | Duración del Refresh Token en días |
 
 ---
 
@@ -101,7 +104,7 @@ Almacena las cuentas de usuario del sistema. Utiliza `UUID` generado en la capa 
 | `updated_at` | `TIMESTAMP` | No | `CURRENT_TIMESTAMP` | Última modificación |
 
 ### 3.2. Tabla `refresh_tokens`
-Preparada en el esquema inicial para la gestión de sesiones y renovación de tokens JWT.
+Gestionada por el módulo `auth` (`RefreshTokenEntity` / `IRefreshTokenRepository`) para el almacenamiento, rotación y revocación de sesiones JWT.
 
 | Columna | Tipo SQL | Nulo | Por Defecto | Restricciones |
 | :--- | :--- | :---: | :--- | :--- |
@@ -167,17 +170,14 @@ Elementos de checklist dependientes de una tarea principal.
 Para soportar filtros opcionales combinables sin ramificar código en Java ni usar `CriteriaBuilder`, los repositorios emplean evaluación nula en JPQL:
 
 ```java
-// Ejemplo en ITaskRepository
+// Ejemplo en IRefreshTokenRepository
 @Query("""
-    SELECT t FROM TaskEntity t
-    WHERE (:userId IS NULL OR t.userId = :userId)
-      AND (:categoryId IS NULL OR t.categoryId = :categoryId)
-      AND (:status IS NULL OR t.status = :status)
+    SELECT r FROM RefreshTokenEntity r
+    WHERE (:userId IS NULL OR r.userId = :userId)
+      AND (:isRevoked IS NULL OR r.isRevoked = :isRevoked)
 """)
-List<TaskEntity> findAllByFilters(
+List<RefreshTokenEntity> findAllFiltered(
     @Param("userId") UUID userId,
-    @Param("categoryId") Long categoryId,
-    @Param("status") TaskStatusEnum status
+    @Param("isRevoked") Boolean isRevoked
 );
 ```
-
