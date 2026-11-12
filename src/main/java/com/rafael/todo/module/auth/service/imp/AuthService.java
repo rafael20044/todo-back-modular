@@ -120,7 +120,7 @@ public class AuthService implements
 
     @Override
     public void logoutAllByUserId(UUID userId) {
-        
+        this.deleteRefreshTokenAdapter.deleteByUserId(userId);
     }
 
 
@@ -141,6 +141,8 @@ public class AuthService implements
 
     @Override
     public void logout(String refreshToken) {
+        var token = findByTokenHash(refreshToken);
+        deleteRefreshTokenAdapter.delete(token.getIdValue());
     }
 
 }
