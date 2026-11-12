@@ -22,8 +22,8 @@ import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -63,6 +63,7 @@ public class AuthService implements
     }
 
     @Override
+    @Transactional
     public AuthTokensDtoService login(LoginDtoService dto) {
         var model = this.findUserUseCase.findByEmail(dto.email());
 
@@ -90,17 +91,17 @@ public class AuthService implements
     }
 
     @Override
+    @Transactional
     public AuthTokensDtoService refresh(RefreshTokenRequestDtoService dto) {
         var token = findByTokenHash(dto.refreshToken());
-        if (token.getRevoked().isRevoked()) {
-            throw RefreshTokenException.revoked();
-        }
-        if (token.getExpiresAtValue().isBefore(LocalDateTime.now())) {
-            throw RefreshTokenException.expired();
+        token.validateActive();
+
+        var user = this.findUserUseCase.findById(token.getUserIdValue());
+        if (!user.getAccountValue()) {
+            throw AuthCredentialsException.accountDisabled();
         }
 
         token = token.revoke();
-        var user = this.findUserUseCase.findById(token.getUserIdValue());
         var accessToken = this.jwtService.generateAccessToken(
                 user.getIdValue(),
                 user.getEmailValue(),
@@ -114,35 +115,38 @@ public class AuthService implements
         );
         this.updateRefreshTokenAdapter.update(token);
         this.createRefreshTokenAdapter.create(refreshTokenModel);
-        
+
         return new AuthTokensDtoService(accessToken, refreshToken, expireAt);
     }
 
     @Override
+    @Transactional
+    public void logout(String refreshToken) {
+        var token = findByTokenHash(refreshToken);
+        deleteRefreshTokenAdapter.delete(token.getIdValue());
+    }
+
+    @Override
+    @Transactional
     public void logoutAllByUserId(UUID userId) {
         this.deleteRefreshTokenAdapter.deleteByUserId(userId);
     }
 
-
     @Override
     public RefreshTokenModel findByTokenHash(String tokenHash) {
-        return findRefreshTokenAdapter.findByTokenHash(tokenHash).orElseThrow(() -> RefreshTokenException.notFound());
+        return findRefreshTokenAdapter.findByTokenHash(tokenHash)
+                .orElseThrow(RefreshTokenException::notFound);
     }
 
     @Override
     public RefreshTokenModel findById(Long id) {
-        return findRefreshTokenAdapter.findById(id).orElseThrow(() -> RefreshTokenException.notFound());
+        return findRefreshTokenAdapter.findById(id)
+                .orElseThrow(RefreshTokenException::notFound);
     }
 
     @Override
     public List<RefreshTokenModel> findAllFiltered(UUID userId, Boolean isRevoked) {
-       return this.findRefreshTokenAdapter.findAllFiltered(userId, isRevoked);
-    }
-
-    @Override
-    public void logout(String refreshToken) {
-        var token = findByTokenHash(refreshToken);
-        deleteRefreshTokenAdapter.delete(token.getIdValue());
+        return this.findRefreshTokenAdapter.findAllFiltered(userId, isRevoked);
     }
 
 }

@@ -5,8 +5,10 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.rafael.todo.module.auth.repository.entity.RefreshTokenEntity;
 
@@ -16,6 +18,8 @@ public interface IRefreshTokenRepository extends JpaRepository<RefreshTokenEntit
 
     List<RefreshTokenEntity> findAllByUserId(UUID userId);
 
+    @Modifying
+    @Transactional
     void deleteByUserId(UUID userId);
 
     @Query("""
@@ -29,4 +33,3 @@ public interface IRefreshTokenRepository extends JpaRepository<RefreshTokenEntit
     );
 
 }
-

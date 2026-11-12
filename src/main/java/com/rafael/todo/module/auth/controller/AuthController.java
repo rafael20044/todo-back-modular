@@ -27,6 +27,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @RestController
@@ -66,7 +68,15 @@ public class AuthController {
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@CookieValue(name = "token") String refreshToken) {
         this.logoutUseCase.logout(refreshToken);
-        return ResponseEntity.noContent().build();
+        var clearCookie = ResponseCookie.from(MyConst.COOKIE_NAME.getValue(), "")
+                .httpOnly(true)
+                .path("/")
+                .maxAge(0)
+                .sameSite("Strict")
+                .build();
+        return ResponseEntity.noContent()
+                .header(HttpHeaders.SET_COOKIE, clearCookie.toString())
+                .build();
     }
 
     @DeleteMapping("/logout/{userId}")
@@ -81,7 +91,7 @@ public class AuthController {
             @RequestParam(required = false) Boolean isRevoked,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-        
+
         var list = this.findRefreshTokenUseCase.findAllFiltered(userId, isRevoked);
         return ResponseEntity.ok(AuthMapperController.toPage(list, page, size));
     }
@@ -93,9 +103,12 @@ public class AuthController {
     }
 
     private ResponseEntity<ResponseAuthDto> createResponseWithCookie(String refreshToken, AuthTokensDtoService data) {
+        var maxAge = Duration.between(LocalDateTime.now(), data.expiresAt());
         var cookie = ResponseCookie.from(MyConst.COOKIE_NAME.getValue(), refreshToken)
                 .httpOnly(true)
                 .path("/")
+                .maxAge(maxAge.isNegative() ? Duration.ZERO : maxAge)
+                .sameSite("Strict")
                 .build();
         return ResponseEntity.ok()
                 .header(HttpHeaders.SET_COOKIE, cookie.toString())
