@@ -1,0 +1,718 @@
+type: collection.insomnia.rest/5.0
+schema_version: "5.1"
+name: TODO
+meta:
+  id: wrk_1ceaf9e6b61443e286dc72b47f1bc95a
+  created: 1792682191415
+  modified: 1793600000000
+  description: "Colección completa para Todo Backend Modular (Auth, Users, Categories, Tasks, Subtasks)"
+collection:
+  - name: Auth
+    meta:
+      id: fld_a1b2c3d4e5f647898123456789abcdef
+      created: 1793600000001
+      modified: 1793600000001
+      sortKey: -1793600000001
+      description: "Endpoints de autenticación JWT y gestión de Refresh Tokens (Cookie HttpOnly 'token')"
+    children:
+      - url: "{{ _.BASE_URL }}/auth/login"
+        name: Login
+        meta:
+          id: req_auth_login_00000000000000001
+          created: 1793600000010
+          modified: 1793600000010
+          isPrivate: false
+          description: "Inicia sesión, devuelve accessToken en el JSON y guarda el refreshToken en la cookie HttpOnly 'token'"
+          sortKey: -1793600000010
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"email": "rafael@gmail.com",
+            	"password": "1234567890"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/auth/refresh"
+        name: Refresh Token
+        meta:
+          id: req_auth_refresh_000000000000002
+          created: 1793600000020
+          modified: 1793600000020
+          isPrivate: false
+          description: "Rota el refreshToken leyendo la cookie HttpOnly 'token' y devuelve un nuevo accessToken"
+          sortKey: -1793600000020
+        method: POST
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/auth/logout"
+        name: Logout
+        meta:
+          id: req_auth_logout_0000000000000003
+          created: 1793600000030
+          modified: 1793600000030
+          isPrivate: false
+          description: "Elimina el refresh token actual usando la cookie 'token' y limpia la cookie (maxAge=0)"
+          sortKey: -1793600000030
+        method: POST
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/auth/logout/58c4abad-d824-4b9b-8681-845a6c6f49eb"
+        name: Logout All By User
+        meta:
+          id: req_auth_logout_all_000000000004
+          created: 1793600000040
+          modified: 1793600000040
+          isPrivate: false
+          description: "Cierra todas las sesiones (elimina todos los refresh tokens) de un usuario por su UUID"
+          sortKey: -1793600000040
+        method: DELETE
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/auth/tokens"
+        name: List Tokens
+        meta:
+          id: req_auth_tokens_list_00000000005
+          created: 1793600000050
+          modified: 1793600000050
+          isPrivate: false
+          description: "Lista paginada de refresh tokens con filtros opcionales por userId e isRevoked"
+          sortKey: -1793600000050
+        method: GET
+        parameters:
+          - name: userId
+            value: "58c4abad-d824-4b9b-8681-845a6c6f49eb"
+            description: ""
+            disabled: true
+          - name: isRevoked
+            value: "false"
+            description: ""
+            disabled: true
+          - name: page
+            value: "0"
+            description: ""
+            disabled: true
+          - name: size
+            value: "10"
+            description: ""
+            disabled: true
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/auth/tokens/1"
+        name: Get Token
+        meta:
+          id: req_auth_tokens_get_000000000006
+          created: 1793600000060
+          modified: 1793600000060
+          isPrivate: false
+          description: "Obtiene un refresh token por su ID (Long)"
+          sortKey: -1793600000060
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: User
+    meta:
+      id: fld_d613e4806016425abc981f732a66732c
+      created: 1792682200185
+      modified: 1792952247223
+      sortKey: -1792682200185
+      description: ""
+    children:
+      - url: "{{ _.BASE_URL }}/users"
+        name: Create
+        meta:
+          id: req_fb7d88deea83492798cd3aa368553b13
+          created: 1792682204916
+          modified: 1792682782176
+          isPrivate: false
+          description: ""
+          sortKey: -1792682204916
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"username": "Rafael",
+            	"email": "rafael@gmail.com",
+            	"password": "1234567890",
+            	"role": "ROLE_USER"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/users"
+        name: List
+        meta:
+          id: req_28c07a0bb37044b5a541d99df1be6f3e
+          created: 1792718674939
+          modified: 1792718818753
+          isPrivate: false
+          description: ""
+          sortKey: -1792718674939
+        method: GET
+        parameters:
+          - name: page
+            value: "0"
+            description: ""
+            disabled: true
+          - name: size
+            value: "10"
+            description: ""
+            disabled: true
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/users/1a93c311-ef2f-4c55-b51a-28e6f85ccafd"
+        name: Get
+        meta:
+          id: req_38e0e1aa622f46ccad8619dbc4cfa46d
+          created: 1792718821786
+          modified: 1792719505168
+          isPrivate: false
+          description: ""
+          sortKey: -1792718821786
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/users/e1f8451c-4c20-4793-9544-59358ae492ea"
+        name: Update
+        meta:
+          id: req_7f7d2bb1c69a4c56a160e37d75533eb2
+          created: 1792719210311
+          modified: 1792719326471
+          isPrivate: false
+          description: ""
+          sortKey: -1792719210311
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"username": "rafaelll",
+            	"password": null,
+            	"role": "ROLE_USER"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/users/646a64e2-6df7-41d9-8f44-5ff1063ac2b9"
+        name: Delete
+        meta:
+          id: req_a0ebc6ff79b342e7b3f543d8579ca5ba
+          created: 1792719469789
+          modified: 1792719546013
+          isPrivate: false
+          description: ""
+          sortKey: -1792719469789
+        method: DELETE
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: category
+    meta:
+      id: fld_2b73aa5ecec741668438d9ebe5ec2df6
+      created: 1792952405045
+      modified: 1792952405045
+      sortKey: -1792952405045
+      description: ""
+    children:
+      - url: "{{ _.BASE_URL }}/categories"
+        name: List
+        meta:
+          id: req_49530dc4a0fc4222bd9e85f13670d107
+          created: 1792952410277
+          modified: 1793502184953
+          isPrivate: false
+          description: ""
+          sortKey: -1792952410277
+        method: GET
+        parameters:
+          - name: userId
+            value: "58c4abad-d824-4b9b-8681-845a6c6f49eb"
+            description: ""
+            disabled: true
+          - name: page
+            value: "0"
+            description: ""
+            disabled: true
+          - name: size
+            value: "20"
+            description: ""
+            disabled: true
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/categories"
+        name: Create
+        meta:
+          id: req_4aa1b3ed395140b7b201af257a261e43
+          created: 1792952514373
+          modified: 1793501829941
+          isPrivate: false
+          description: ""
+          sortKey: -1792952514373
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"userId": "58c4abad-d824-4b9b-8681-845a6c6f49eb",
+            	"name": "Trabajo",
+            	"color": "#3B82F6"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/categories/1"
+        name: Get
+        meta:
+          id: req_11d29491ce1d4e1ca37486cbafae140f
+          created: 1792952714833
+          modified: 1792952757054
+          isPrivate: false
+          description: ""
+          sortKey: -1792952714833
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/categories/1"
+        name: Update
+        meta:
+          id: req_65aff4193de6493dbaf87879d81938d2
+          created: 1792952762108
+          modified: 1792952870709
+          isPrivate: false
+          description: ""
+          sortKey: -1792952762108
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"name": "Personal",
+            	"color": "#10B981"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/categories/1"
+        name: Delete
+        meta:
+          id: req_6dbb21e346124d09b6fc3474a848db64
+          created: 1792952902279
+          modified: 1792952920815
+          isPrivate: false
+          description: ""
+          sortKey: -1792952902279
+        method: DELETE
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: task
+    meta:
+      id: fld_34d1330b8fa242b497c8842fe80c61a2
+      created: 1793501671173
+      modified: 1793501671173
+      sortKey: -1793501671173
+      description: ""
+    children:
+      - url: "{{ _.BASE_URL }}/tasks"
+        name: Create
+        meta:
+          id: req_943c046add9a47e39b42f383ed2f7a5c
+          created: 1793501840515
+          modified: 1793502167811
+          isPrivate: false
+          description: ""
+          sortKey: -1793501840515
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"userId": "58c4abad-d824-4b9b-8681-845a6c6f49eb",
+            	"categoryId": 1,
+            	"title": "Implementar módulo Auth",
+            	"description": "Autenticación con JWT y Refresh Token en cookie HttpOnly",
+            	"priority": "HIGH",
+            	"dueDate": "2026-12-31T23:59:59"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/tasks"
+        name: List
+        meta:
+          id: req_e19350c655ed4e7aa5cd37bc27a8ba27
+          created: 1793502160677
+          modified: 1793502244028
+          isPrivate: false
+          description: ""
+          sortKey: -1793502160677
+        method: GET
+        parameters:
+          - name: userId
+            value: "58c4abad-d824-4b9b-8681-845a6c6f49eb"
+            description: ""
+            disabled: true
+          - name: categoryId
+            value: "1"
+            description: ""
+            disabled: true
+          - name: status
+            value: "PENDING"
+            description: "PENDING | IN_PROGRESS | COMPLETED | CANCELLED"
+            disabled: true
+          - name: page
+            value: "0"
+            description: ""
+            disabled: true
+          - name: size
+            value: "20"
+            description: ""
+            disabled: true
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/tasks/1"
+        name: Get
+        meta:
+          id: req_task_get_000000000000000001
+          created: 1793600000101
+          modified: 1793600000101
+          isPrivate: false
+          description: ""
+          sortKey: -1793502160670
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/tasks/1"
+        name: Update
+        meta:
+          id: req_task_update_000000000000002
+          created: 1793600000102
+          modified: 1793600000102
+          isPrivate: false
+          description: ""
+          sortKey: -1793502160660
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"categoryId": 1,
+            	"title": "Implementar módulo Auth (Completado)",
+            	"description": "Autenticación con JWT lista",
+            	"status": "COMPLETED",
+            	"priority": "HIGH",
+            	"dueDate": "2026-12-31T23:59:59"
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/tasks/1"
+        name: Delete
+        meta:
+          id: req_task_delete_000000000000003
+          created: 1793600000103
+          modified: 1793600000103
+          isPrivate: false
+          description: ""
+          sortKey: -1793502160650
+        method: DELETE
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+  - name: subtask
+    meta:
+      id: fld_subtask_0000000000000000001
+      created: 1793600000200
+      modified: 1793600000200
+      sortKey: -1793550000000
+      description: "Endpoints de Subtareas asociadas a una tarea"
+    children:
+      - url: "{{ _.BASE_URL }}/subtasks"
+        name: Create
+        meta:
+          id: req_subtask_create_000000000001
+          created: 1793600000201
+          modified: 1793600000201
+          isPrivate: false
+          description: ""
+          sortKey: -1793600000201
+        method: POST
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"taskId": 1,
+            	"title": "Crear Value Objects de Auth",
+            	"position": 1
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/subtasks"
+        name: List
+        meta:
+          id: req_subtask_list_00000000000002
+          created: 1793600000202
+          modified: 1793600000202
+          isPrivate: false
+          description: "El parámetro taskId es obligatorio en GET /subtasks"
+          sortKey: -1793600000202
+        method: GET
+        parameters:
+          - name: taskId
+            value: "1"
+            description: "ID de la tarea padre (requerido)"
+            disabled: false
+          - name: page
+            value: "0"
+            description: ""
+            disabled: true
+          - name: size
+            value: "20"
+            description: ""
+            disabled: true
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/subtasks/1"
+        name: Get
+        meta:
+          id: req_subtask_get_000000000000003
+          created: 1793600000203
+          modified: 1793600000203
+          isPrivate: false
+          description: ""
+          sortKey: -1793600000203
+        method: GET
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/subtasks/1"
+        name: Update
+        meta:
+          id: req_subtask_update_000000000004
+          created: 1793600000204
+          modified: 1793600000204
+          isPrivate: false
+          description: ""
+          sortKey: -1793600000204
+        method: PUT
+        body:
+          mimeType: application/json
+          text: |-
+            {
+            	"title": "Crear Value Objects de Auth (Listo)",
+            	"completed": true,
+            	"position": 1
+            }
+        headers:
+          - name: Content-Type
+            value: application/json
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+      - url: "{{ _.BASE_URL }}/subtasks/1"
+        name: Delete
+        meta:
+          id: req_subtask_delete_000000000005
+          created: 1793600000205
+          modified: 1793600000205
+          isPrivate: false
+          description: ""
+          sortKey: -1793600000205
+        method: DELETE
+        settings:
+          renderRequestBody: true
+          encodeUrl: true
+          followRedirects: global
+          cookies:
+            send: true
+            store: true
+          rebuildPath: true
+cookieJar:
+  name: Default Jar
+  meta:
+    id: jar_56c838c96e8cfc3e970db25b4476b93df3462c69
+    created: 1792682191420
+    modified: 1792682470953
+  cookies:
+    - id: d7daa2d4-ca0b-4535-8d8b-0b0c47fd566d
+      key: JSESSIONID
+      value: 3D79F82F0E73EEC68F4513B7FED7AC9C
+      domain: localhost
+      path: /api
+      secure: false
+      httpOnly: true
+      hostOnly: true
+environments:
+  name: Base Environment
+  meta:
+    id: env_56c838c96e8cfc3e970db25b4476b93df3462c69
+    created: 1792682191417
+    modified: 1792682251453
+    isPrivate: false
+  data:
+    BASE_URL: http://localhost:8080/api

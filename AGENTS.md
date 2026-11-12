@@ -22,17 +22,18 @@ El proyecto adopta una **Arquitectura Modular por Capas Pragmática (Vertical Sl
 
 ### 1. Organización Modular
 - Cada contexto o funcionalidad de negocio se encapsula en su propio paquete:  
-  `com.rafael.todo.module.<nombre_modulo>` (`user`, `category`, `task`, `subtask` completados con sus suites de tests).
+  `com.rafael.todo.module.<nombre_modulo>` (`auth`, `user`, `category`, `task`, `subtask`).
 - Componentes transversales y compartidos residen en:  
-  `com.rafael.todo.shared` (`DomainException`, `ErrorDto`, `GlobalExceptionController`, `MyConst`).
-- Configuración global (seguridad, beans globales) reside en:  
-  `com.rafael.todo.configuration`.
+  `com.rafael.todo.shared` (`DomainException`, `ErrorDto`, `GlobalExceptionController`, `MyConst`, `IJwtService`, `JwtService`).
+- Configuración global (seguridad, propiedades de aplicación, beans globales) reside en:  
+  `com.rafael.todo.configuration` (`SecurityConfiguration`, `ApplicationConfiguration`).
 
 ### 2. Capas por Módulo
 Dentro de cada módulo se organiza una estructura de capas clara y directa:
 1. **`controller`**: Controladores REST (`@RestController` con `@Log`), DTOs de petición/respuesta (`record`s) y mappers a servicios.
    - Endpoint unificado `findAll`: Soporta filtros opcionales por `@RequestParam` y paginación con `Page<ResponseDto>`.
    - `DELETE`: Retorna siempre `ResponseEntity<Void>` con status 204 (`noContent().build()`).
+   - **Cookies `HttpOnly` (`auth`)**: El manejo de cookies (`ResponseCookie`, `HttpHeaders.SET_COOKIE`, `@CookieValue`) reside exclusivamente en el controlador para mantener la capa `service` desacoplada del protocolo HTTP.
 2. **`service`**: Casos de uso / lógica de negocio, DTOs de servicio y mappers a modelos de dominio.
 3. **`repository`**: Persistencia con Spring Data JPA. Contiene subpaquete `entity/` (entidades JPA), `adapter/` (adaptadores que conectan el repositorio con el servicio) y `mapper/` (mappers bidireccionales entre Entity y Model).
    - Filtros opcionales en `@Query` con la cláusula JPQL dinámica: `(:param IS NULL OR e.field = :param)` (soporta combinación multi-filtro con `AND`).
@@ -42,7 +43,7 @@ Dentro de cada módulo se organiza una estructura de capas clara y directa:
 ### 3. Regla de Oro: Relaciones y Validación Inter-Modular
 - **Cero Acoplamiento JPA entre Módulos**: Prohibido el uso de relaciones directas `@ManyToOne` o `@OneToMany` entre entidades de diferentes módulos.
 - **Persistencia por IDs Escalares**: Se almacenan únicamente los identificadores (`UUID userId`, `Long categoryId`, `Long taskId`).
-- **Validación Vía Casos de Uso (Simple y Múltiple)**: La verificación de integridad referencial entre módulos se realiza en la capa de `Service` inyectando el o los casos de uso correspondientes (`CategoryService` inyecta `IFindUserUseCase`; `TaskService` inyecta `IFindUserUseCase` e `IFindCategoryUseCase`; `SubtaskService` inyecta `IFindTaskUseCase`), evitando excepciones de base de datos (`DataIntegrityViolationException`) y garantizando respuestas HTTP 404 limpias.
+- **Validación Vía Casos de Uso (Simple y Múltiple)**: La verificación de integridad referencial y consulta entre módulos se realiza en la capa de `Service` inyectando el o los casos de uso correspondientes (`AuthService` inyecta `IFindUserUseCase` e `IJwtService`; `CategoryService` inyecta `IFindUserUseCase`; `TaskService` inyecta `IFindUserUseCase` e `IFindCategoryUseCase`; `SubtaskService` inyecta `IFindTaskUseCase`), evitando excepciones de base de datos (`DataIntegrityViolationException`) y garantizando respuestas HTTP claras (`401`, `403`, `404`).
 
 ### 4. Regla de Aislamiento de Lógica, Rol de Mappers y Esqueletos Técnicos
 - **Generación Exclusiva de Esqueletos para Implementaciones**:
@@ -58,15 +59,16 @@ Dentro de cada módulo se organiza una estructura de capas clara y directa:
 ---
 
 ## 💎 Modelos de Dominio y Value Objects
-- **Modelos Inmutables**: Clases `final` con atributos `final`, constructor privado, fábricas estáticas (`create` y `reconstitute`), métodos de negocio por copia (*copy-on-write*, ej. `changeName`) y getters de tipos primitivos (`getIdValue()`, etc.).
+- **Modelos Inmutables**: Clases `final` con atributos `final`, constructor privado, fábricas estáticas (`create` y `reconstitute`), métodos de negocio por copia (*copy-on-write*, ej. `changeName`, `revoke`) y getters de tipos primitivos (`getIdValue()`, etc.).
 - **Value Objects**: Implementados con **`record`s de Java 25** para garantizar inmutabilidad, semántica por valor y validación de invariantes en constructores compactos.
-- **Constantes Centralizadas**: Valores límite (mínimos, máximos, regex) se definen en el enum [`MyConst`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/MyConst.java).
+- **Constantes Centralizadas**: Valores límite (mínimos, máximos, regex, nombres de cookies) se definen en el enum [`MyConst`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/MyConst.java).
+- **Propiedades de Configuración Centralizadas**: Las variables definidas en `application.yaml` se inyectan y exponen a través de [`ApplicationConfiguration`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/configuration/ApplicationConfiguration.java).
 
 ---
 
 ## 🛡️ Manejo Centralizado de Excepciones
 - Todas las excepciones de negocio extienden de [`DomainException(code, message, statusCode)`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/DomainException.java).
-- El controlador global [`GlobalExceptionController`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/GlobalExceptionController.java) (`@RestControllerAdvice`) en `shared` intercepta automáticamente cualquier `DomainException` y responde con [`ErrorDto`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/ErrorDto.java) y el código HTTP correspondiente (400, 404, 409, 500).
+- El controlador global [`GlobalExceptionController`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/GlobalExceptionController.java) (`@RestControllerAdvice`) en `shared` intercepta automáticamente cualquier `DomainException` y responde con [`ErrorDto`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/ErrorDto.java) y el código HTTP correspondiente (400, 401, 403, 404, 409, 500).
 
 ---
 
@@ -75,9 +77,9 @@ Cada módulo en `src/test/java/com/rafael/todo/module/<modulo>/` cuenta con una 
 1. **`model/vo/*ValueObjectsTest.java`**: Pruebas con JUnit 5 (`@Nested`, `@DisplayName`, `@ParameterizedTest`) validando creación, normalización y excepciones de dominio (`400 Bad Request`).
 2. **`model/*ModelTest.java`**: Pruebas de fábricas (`create`, `reconstitute`) y mutaciones inmutables *copy-on-write*.
 3. **`mapper/*MappersTest.java`**: Pruebas exhaustivas de transformación para `*MapperController`, `*MapperService` y `*MapperRepository`.
-4. **`service/*ServiceTest.java`**: Pruebas unitarias con Mockito (`@ExtendWith(MockitoExtension.class)`) para todos los casos de uso y validaciones inter-modulares (`404`/`409`).
+4. **`service/*ServiceTest.java`**: Pruebas unitarias con Mockito (`@ExtendWith(MockitoExtension.class)`) para todos los casos de uso y validaciones inter-modulares (`401`/`403`/`404`/`409`).
 5. **`repository/*AdapterTest.java`**: Pruebas unitarias con Mockito para el adaptador de persistencia (`I*Repository`, `PasswordEncoder`).
-6. **`controller/*ControllerTest.java`**: Pruebas de endpoints REST utilizando `MockMvcBuilders.standaloneSetup` junto con `GlobalExceptionController`, verificando códigos HTTP (`200`, `201`, `204`, `400`, `404`, `409`), cabecera `Location` y contratos JSON.
+6. **`controller/*ControllerTest.java`**: Pruebas de endpoints REST utilizando `MockMvcBuilders.standaloneSetup` junto con `GlobalExceptionController`, verificando códigos HTTP (`200`, `201`, `204`, `400`, `401`, `403`, `404`, `409`), cabeceras (`Location`, `Set-Cookie`) y contratos JSON.
 
 ---
 
