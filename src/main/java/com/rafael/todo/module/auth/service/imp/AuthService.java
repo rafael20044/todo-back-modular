@@ -65,12 +65,15 @@ public class AuthService implements
     @Override
     @Transactional
     public AuthTokensDtoService login(LoginDtoService dto) {
+        log.info("Authenticating user with email: " + dto.email());
         var model = this.findUserUseCase.findByEmail(dto.email());
 
         if (!model.getAccountValue()) {
+            log.warning("Login rejected - account is disabled for email: " + dto.email());
             throw AuthCredentialsException.accountDisabled();
         }
         if (!passwordEncoder.matches(dto.password(), model.getPasswordValue())) {
+            log.warning("Login rejected - invalid credentials for email: " + dto.email());
             throw AuthCredentialsException.invalidCredentials();
         }
 
@@ -86,6 +89,7 @@ public class AuthService implements
                 new CreateRefreshTokenDtoService(model.getIdValue(), refreshToken, expireAt)
         );
         this.createRefreshTokenAdapter.create(refreshTokenModel);
+        log.info("Login successful and refresh token issued for user: " + model.getIdValue());
 
         return new AuthTokensDtoService(accessToken, refreshToken, expireAt);
     }
@@ -93,11 +97,13 @@ public class AuthService implements
     @Override
     @Transactional
     public AuthTokensDtoService refresh(RefreshTokenRequestDtoService dto) {
+        log.info("Processing refresh token rotation");
         var token = findByTokenHash(dto.refreshToken());
         token.validateActive();
 
         var user = this.findUserUseCase.findById(token.getUserIdValue());
         if (!user.getAccountValue()) {
+            log.warning("Refresh rejected - account is disabled for user: " + user.getIdValue());
             throw AuthCredentialsException.accountDisabled();
         }
 
@@ -115,6 +121,7 @@ public class AuthService implements
         );
         this.updateRefreshTokenAdapter.update(token);
         this.createRefreshTokenAdapter.create(refreshTokenModel);
+        log.info("Refresh token rotated successfully for user: " + user.getIdValue());
 
         return new AuthTokensDtoService(accessToken, refreshToken, expireAt);
     }
@@ -122,30 +129,42 @@ public class AuthService implements
     @Override
     @Transactional
     public void logout(String refreshToken) {
+        log.info("Processing logout for single session");
         var token = findByTokenHash(refreshToken);
         deleteRefreshTokenAdapter.delete(token.getIdValue());
+        log.info("Refresh token deleted with ID: " + token.getIdValue());
     }
 
     @Override
     @Transactional
     public void logoutAllByUserId(UUID userId) {
+        log.info("Deleting all refresh tokens for user: " + userId);
         this.deleteRefreshTokenAdapter.deleteByUserId(userId);
     }
 
     @Override
     public RefreshTokenModel findByTokenHash(String tokenHash) {
+        log.info("Finding refresh token by token hash");
         return findRefreshTokenAdapter.findByTokenHash(tokenHash)
-                .orElseThrow(RefreshTokenException::notFound);
+                .orElseThrow(() -> {
+                    log.warning("Refresh token not found by hash");
+                    return RefreshTokenException.notFound();
+                });
     }
 
     @Override
     public RefreshTokenModel findById(Long id) {
+        log.info("Finding refresh token with id: " + id);
         return findRefreshTokenAdapter.findById(id)
-                .orElseThrow(RefreshTokenException::notFound);
+                .orElseThrow(() -> {
+                    log.warning("Refresh token not found with id: " + id);
+                    return RefreshTokenException.notFound();
+                });
     }
 
     @Override
     public List<RefreshTokenModel> findAllFiltered(UUID userId, Boolean isRevoked) {
+        log.info(String.format("Finding refresh tokens with filters [userId: %s, isRevoked: %s]", userId, isRevoked));
         return this.findRefreshTokenAdapter.findAllFiltered(userId, isRevoked);
     }
 

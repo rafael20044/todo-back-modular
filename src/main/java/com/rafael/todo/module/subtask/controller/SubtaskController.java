@@ -24,8 +24,11 @@ import com.rafael.todo.module.subtask.service.IDeleteSubtaskUseCase;
 import com.rafael.todo.module.subtask.service.IFindSubtaskUseCase;
 import com.rafael.todo.module.subtask.service.IUpdateSubtaskUseCase;
 
+import lombok.extern.java.Log;
+
 @RestController
 @RequestMapping("/subtasks")
+@Log
 public final class SubtaskController {
 
     private final ICreateSubtaskUseCase createSubtaskUseCase;
@@ -48,9 +51,11 @@ public final class SubtaskController {
 
     @PostMapping
     public ResponseEntity<ResponseSubtaskDto> create(@RequestBody CreateSubtaskDto request) {
+        log.info("POST /subtasks - Request received to create subtask: '" + request.title() + "' for task: " + request.taskId());
         var model = this.createSubtaskUseCase.create(SubtaskMapperController.toServiceDto(request));
         var dto = SubtaskMapperController.toResponseDto(model);
         var uri = URI.create("subtasks/" + dto.id());
+        log.info("POST /subtasks - Subtask successfully created with ID: " + dto.id());
         return ResponseEntity.created(uri).body(dto);
     }
 
@@ -60,12 +65,14 @@ public final class SubtaskController {
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "20") int size
     ) {
+        log.info(String.format("GET /subtasks - Listing subtasks (taskId: %d, page: %d, size: %d)", taskId, page, size));
         var list = this.findSubtaskUseCase.findAllByTaskId(taskId);
         return ResponseEntity.ok(SubtaskMapperController.toPage(list, page, size));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<ResponseSubtaskDto> findById(@PathVariable Long id) {
+        log.info("GET /subtasks/" + id + " - Fetching subtask by ID");
         var model = this.findSubtaskUseCase.findById(id);
         return ResponseEntity.ok(SubtaskMapperController.toResponseDto(model));
     }
@@ -75,15 +82,19 @@ public final class SubtaskController {
         @PathVariable Long id,
         @RequestBody UpdateSubtaskDto request
     ) {
+        log.info("PUT /subtasks/" + id + " - Request received to update subtask");
         var model = this.updateSubtaskUseCase.update(SubtaskMapperController.toServiceDto(id, request));
-        return ResponseEntity.ok(SubtaskMapperController.toResponseDto(model));
+        var response = SubtaskMapperController.toResponseDto(model);
+        log.info("PUT /subtasks/" + id + " - Subtask updated successfully");
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
+        log.info("DELETE /subtasks/" + id + " - Request received to delete subtask");
         this.deleteSubtaskUseCase.delete(id);
+        log.info("DELETE /subtasks/" + id + " - Subtask deleted successfully");
         return ResponseEntity.noContent().build();
     }
 
 }
-

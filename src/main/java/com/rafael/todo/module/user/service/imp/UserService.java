@@ -74,6 +74,7 @@ public final class UserService implements
 
     @Override
     public UserModel findById(UUID uuid) {
+        log.info("Finding user with UUID: " + uuid);
         var exist = this.findUserAdapter.findById(uuid);
         if (exist.isEmpty()) {
             log.warning("User not found with UUID: " + uuid);
@@ -104,7 +105,11 @@ public final class UserService implements
 
     @Override
     public UserModel findByEmail(String email) {
-        return this.findUserAdapter.findByEmail(email).orElseThrow(() -> UserEmailException.notFound());
+        log.info("Finding user by email: " + email);
+        return this.findUserAdapter.findByEmail(email).orElseThrow(() -> {
+            log.warning("User not found with email: " + email);
+            return UserEmailException.notFound();
+        });
     }
 
 }

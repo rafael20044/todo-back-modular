@@ -55,18 +55,23 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ResponseAuthDto> login(@RequestBody LoginDto dto) {
+        log.info("POST /auth/login - Login request received for email: " + dto.email());
         var data = this.loginUseCase.login(AuthMapperController.toServiceDto(dto));
+        log.info("POST /auth/login - User authenticated successfully: " + dto.email());
         return createResponseWithCookie(data.refreshToken(), data);
     }
 
     @PostMapping("/refresh")
     public ResponseEntity<ResponseAuthDto> refresh(@CookieValue(name = "token") String refreshToken) {
+        log.info("POST /auth/refresh - Refresh token rotation request received");
         var data = this.refreshTokenUseCase.refresh(AuthMapperController.toServiceDto(refreshToken));
+        log.info("POST /auth/refresh - Refresh token rotated successfully");
         return createResponseWithCookie(data.refreshToken(), data);
     }
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@CookieValue(name = "token") String refreshToken) {
+        log.info("POST /auth/logout - Logout request received for current session");
         this.logoutUseCase.logout(refreshToken);
         var clearCookie = ResponseCookie.from(MyConst.COOKIE_NAME.getValue(), "")
                 .httpOnly(true)
@@ -74,6 +79,7 @@ public class AuthController {
                 .maxAge(0)
                 .sameSite("Strict")
                 .build();
+        log.info("POST /auth/logout - Session closed and refresh cookie cleared");
         return ResponseEntity.noContent()
                 .header(HttpHeaders.SET_COOKIE, clearCookie.toString())
                 .build();
@@ -81,7 +87,9 @@ public class AuthController {
 
     @DeleteMapping("/logout/{userId}")
     public ResponseEntity<Void> logoutAllByUserId(@PathVariable UUID userId) {
+        log.info("DELETE /auth/logout/" + userId + " - Request received to close all sessions for user");
         this.logoutUseCase.logoutAllByUserId(userId);
+        log.info("DELETE /auth/logout/" + userId + " - All sessions closed for user");
         return ResponseEntity.noContent().build();
     }
 
@@ -91,13 +99,14 @@ public class AuthController {
             @RequestParam(required = false) Boolean isRevoked,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
-
+        log.info(String.format("GET /auth/tokens - Listing refresh tokens (userId: %s, isRevoked: %s, page: %d, size: %d)", userId, isRevoked, page, size));
         var list = this.findRefreshTokenUseCase.findAllFiltered(userId, isRevoked);
         return ResponseEntity.ok(AuthMapperController.toPage(list, page, size));
     }
 
     @GetMapping("/tokens/{id}")
     public ResponseEntity<ResponseRefreshTokenDto> findById(@PathVariable Long id) {
+        log.info("GET /auth/tokens/" + id + " - Fetching refresh token by ID");
         var model = this.findRefreshTokenUseCase.findById(id);
         return ResponseEntity.ok(AuthMapperController.toResponseDto(model));
     }
