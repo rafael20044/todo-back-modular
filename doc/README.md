@@ -8,9 +8,9 @@ API RESTful para la gestión de autenticación JWT, usuarios, categorías, tarea
 
 | Documento | Descripción |
 | :--- | :--- |
-| **[1. Arquitectura y Diseño](./architecture.md)** | Organización modular (*Vertical Slices*), flujo de datos por capas, desacoplamiento inter-modular, manejo global de excepciones y trazabilidad. |
+| **[1. Arquitectura y Diseño](./architecture.md)** | Organización modular (*Vertical Slices*), flujo de datos por capas, filtro JWT Stateless, desacoplamiento inter-modular, manejo global de excepciones y trazabilidad. |
 | **[2. Base de Datos y Migraciones](./database.md)** | Esquema relacional en H2 gestionado por Flyway, diagrama Entidad-Relación (ER), diccionario de tablas, índices y consola web H2. |
-| **[3. Referencia de la API REST](./api-reference.md)** | Catálogo completo de endpoints (`/api/auth`, `/api/users`, `/api/categories`, `/api/tasks`, `/api/subtasks`), cookies `HttpOnly`, contratos JSON, paginación y respuestas de error. |
+| **[3. Referencia de la API REST](./api-reference.md)** | Catálogo completo de endpoints (`/api/auth`, `/api/users`, `/api/categories`, `/api/tasks`, `/api/subtasks`), rutas públicas vs. protegidas (`Bearer`), cookies `HttpOnly`, contratos JSON y errores. |
 | **[4. Dominio, Value Objects y Validaciones](./domain-and-validations.md)** | Modelos inmutables (*copy-on-write*), Value Objects (`record`), Enums, invariantes de dominio y constantes centralizadas (`MyConst`). |
 
 ---
@@ -23,7 +23,7 @@ API RESTful para la gestión de autenticación JWT, usuarios, categorías, tarea
 | **Spring Boot** | `4.1.1` | Framework principal de aplicación y contenedor IoC |
 | **Spring Web MVC** | `4.1.1` | Exposición de controladores RESTful (`/api`) y cookies `HttpOnly` |
 | **Spring Data JPA / Hibernate** | `7.4.5` | Capa de persistencia ORM y consultas dinámicas JPQL |
-| **Spring Security** | `7.1.1` | Configuración de seguridad HTTP y cifrado de contraseñas (`BCryptPasswordEncoder`) |
+| **Spring Security** | `7.1.1` | Seguridad HTTP Stateless, `JwtAuthenticationFilter` y `BCryptPasswordEncoder` |
 | **Auth0 Java JWT** | `4.5.0` | Generación y verificación de JSON Web Tokens (`HMAC256`) |
 | **Flyway** | Integrado | Control de versiones y migraciones SQL deterministas (`V1__initial_schema.sql`) |
 | **H2 Database** | En memoria | Motor de base de datos relacional rápido para desarrollo y pruebas |
@@ -75,7 +75,7 @@ todo-back-modular/
 ├── src/
 │   ├── main/
 │   │   ├── java/com/rafael/todo/
-│   │   │   ├── configuration/        # Configuración global (ApplicationConfiguration, SecurityConfiguration)
+│   │   │   ├── configuration/        # Configuración global (ApplicationConfiguration, JwtAuthenticationFilter, SecurityConfiguration)
 │   │   │   ├── shared/               # DomainException, ErrorDto, GlobalExceptionController, IJwtService, JwtService, MyConst
 │   │   │   ├── module/               # Módulos de negocio (auth, user, category, task, subtask)
 │   │   │   └── TodoApplication.java  # Punto de entrada Spring Boot

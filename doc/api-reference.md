@@ -4,6 +4,9 @@ Todos los endpoints están publicados bajo el prefijo global **`/api`** configur
 
 - **Base URL Local**: `http://localhost:8080/api`
 - **Formato de Intercambio**: `application/json`
+- **Autenticación JWT (Stateless)**:
+  - **Rutas Públicas**: `POST /api/auth/login`, `POST /api/auth/refresh`, `POST /api/auth/logout` y `POST /api/users`.
+  - **Rutas Protegidas**: Todos los demás endpoints requieren la cabecera `Authorization: Bearer <accessToken>`.
 - **Paginación**: Todos los listados (`GET`) devuelven un objeto `Page<T>` estándar de Spring Data.
 - **Eliminación (`DELETE`)**: Siempre retorna `204 No Content` sin cuerpo.
 
@@ -13,14 +16,14 @@ Todos los endpoints están publicados bajo el prefijo global **`/api`** configur
 
 Controlador: [`AuthController.java`](../src/main/java/com/rafael/todo/module/auth/controller/AuthController.java)
 
-| Método | Endpoint | Descripción | Status Éxito |
-| :---: | :--- | :--- | :---: |
-| `POST` | `/api/auth/login` | Autentica al usuario, devuelve `accessToken` y asigna cookie `HttpOnly` (`token`) | `200 OK` |
-| `POST` | `/api/auth/refresh` | Rota el refresh token leyendo la cookie `token` y emite un nuevo `accessToken` | `200 OK` |
-| `POST` | `/api/auth/logout` | Elimina el refresh token actual y limpia la cookie `token` (`Max-Age=0`) | `204 No Content` |
-| `DELETE` | `/api/auth/logout/{userId}` | Cierra todas las sesiones activas de un usuario por su `UUID` | `204 No Content` |
-| `GET` | `/api/auth/tokens` | Lista refresh tokens paginados con filtros opcionales (`userId`, `isRevoked`) | `200 OK` |
-| `GET` | `/api/auth/tokens/{id}` | Obtiene el detalle de un refresh token por su `id` (`Long`) | `200 OK` |
+| Método | Endpoint | Autenticación | Descripción | Status Éxito |
+| :---: | :--- | :---: | :--- | :---: |
+| `POST` | `/api/auth/login` | Pública | Autentica al usuario, devuelve `accessToken` y asigna cookie `HttpOnly` (`token`) | `200 OK` |
+| `POST` | `/api/auth/refresh` | Pública (Cookie `token`) | Rota el refresh token leyendo la cookie `token` y emite un nuevo `accessToken` | `200 OK` |
+| `POST` | `/api/auth/logout` | Pública (Cookie `token`) | Elimina el refresh token actual y limpia la cookie `token` (`Max-Age=0`) | `204 No Content` |
+| `DELETE` | `/api/auth/logout/{userId}` | `Bearer Token` | Cierra todas las sesiones activas de un usuario por su `UUID` | `204 No Content` |
+| `GET` | `/api/auth/tokens` | `Bearer Token` | Lista refresh tokens paginados con filtros opcionales (`userId`, `isRevoked`) | `200 OK` |
+| `GET` | `/api/auth/tokens/{id}` | `Bearer Token` | Obtiene el detalle de un refresh token por su `id` (`Long`) | `200 OK` |
 
 ### `POST /api/auth/login` — Iniciar Sesión
 **Request Body (`LoginDto`):**
@@ -69,13 +72,13 @@ Parámetros opcionales: `userId` (`UUID`), `isRevoked` (`Boolean`), `page` (`0`)
 
 Controlador: [`UserController.java`](../src/main/java/com/rafael/todo/module/user/controller/UserController.java)
 
-| Método | Endpoint | Descripción | Status Éxito |
-| :---: | :--- | :--- | :---: |
-| `POST` | `/api/users` | Crea un nuevo usuario | `201 Created` |
-| `GET` | `/api/users` | Lista usuarios paginados (`?page=0&size=10`) | `200 OK` |
-| `GET` | `/api/users/{uuid}` | Obtiene un usuario por su `UUID` | `200 OK` |
-| `PUT` | `/api/users/{uuid}` | Actualiza nombre, contraseña o rol de un usuario | `200 OK` |
-| `DELETE` | `/api/users/{uuid}` | Elimina un usuario por su `UUID` | `204 No Content` |
+| Método | Endpoint | Autenticación | Descripción | Status Éxito |
+| :---: | :--- | :---: | :--- | :---: |
+| `POST` | `/api/users` | Pública | Registra un nuevo usuario | `201 Created` |
+| `GET` | `/api/users` | `Bearer Token` | Lista usuarios paginados (`?page=0&size=10`) | `200 OK` |
+| `GET` | `/api/users/{uuid}` | `Bearer Token` | Obtiene un usuario por su `UUID` | `200 OK` |
+| `PUT` | `/api/users/{uuid}` | `Bearer Token` | Actualiza nombre, contraseña o rol de un usuario | `200 OK` |
+| `DELETE` | `/api/users/{uuid}` | `Bearer Token` | Elimina un usuario por su `UUID` | `204 No Content` |
 
 ### `POST /api/users` — Crear Usuario
 **Request Body (`CreateUserDto`):**
@@ -115,7 +118,8 @@ Controlador: [`UserController.java`](../src/main/java/com/rafael/todo/module/use
 
 ## 3. Módulo de Categorías (`/api/categories`)
 
-Controlador: [`CategoryController.java`](../src/main/java/com/rafael/todo/module/category/controller/CategoryController.java)
+Controlador: [`CategoryController.java`](../src/main/java/com/rafael/todo/module/category/controller/CategoryController.java)  
+*Todos los endpoints de este módulo requieren `Authorization: Bearer <accessToken>`.*
 
 | Método | Endpoint | Descripción | Status Éxito |
 | :---: | :--- | :--- | :---: |
@@ -160,7 +164,8 @@ Controlador: [`CategoryController.java`](../src/main/java/com/rafael/todo/module
 
 ## 4. Módulo de Tareas (`/api/tasks`)
 
-Controlador: [`TaskController.java`](../src/main/java/com/rafael/todo/module/task/controller/TaskController.java)
+Controlador: [`TaskController.java`](../src/main/java/com/rafael/todo/module/task/controller/TaskController.java)  
+*Todos los endpoints de este módulo requieren `Authorization: Bearer <accessToken>`.*
 
 | Método | Endpoint | Descripción | Status Éxito |
 | :---: | :--- | :--- | :---: |
@@ -226,7 +231,8 @@ Controlador: [`TaskController.java`](../src/main/java/com/rafael/todo/module/tas
 
 ## 5. Módulo de Subtareas (`/api/subtasks`)
 
-Controlador: [`SubtaskController.java`](../src/main/java/com/rafael/todo/module/subtask/controller/SubtaskController.java)
+Controlador: [`SubtaskController.java`](../src/main/java/com/rafael/todo/module/subtask/controller/SubtaskController.java)  
+*Todos los endpoints de este módulo requieren `Authorization: Bearer <accessToken>`.*
 
 | Método | Endpoint | Descripción | Status Éxito |
 | :---: | :--- | :--- | :---: |
@@ -293,12 +299,12 @@ Controlador: [`SubtaskController.java`](../src/main/java/com/rafael/todo/module/
 ```
 
 ### Estructura Estándar de Error (`ErrorDto`)
-Cualquier error de negocio (`400`, `401`, `403`, `404`, `409`) o de servidor (`500`) retorna la estructura definida en [`ErrorDto.java`](../src/main/java/com/rafael/todo/shared/ErrorDto.java):
+Cualquier error de negocio o autenticación (`400`, `401`, `403`, `404`, `409`) o de servidor (`500`) retorna la estructura definida en [`ErrorDto.java`](../src/main/java/com/rafael/todo/shared/ErrorDto.java):
 
 ```json
 {
-  "code": "task.id.not.found",
-  "message": "Task with ID 999 not found",
-  "status": 404
+  "code": "auth.access.token.expired",
+  "message": "Access token has expired",
+  "status": 401
 }
 ```

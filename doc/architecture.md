@@ -11,7 +11,7 @@ Cada contexto de negocio vive en su propio paquete bajo `com.rafael.todo.module.
 ```mermaid
 flowchart TD
     subgraph App["com.rafael.todo"]
-        Config["configuration\n(ApplicationConfiguration,\nSecurityConfiguration)"]
+        Config["configuration\n(ApplicationConfiguration,\nJwtAuthenticationFilter,\nSecurityConfiguration)"]
         Shared["shared\n(DomainException, ErrorDto,\nGlobalExceptionController,\nIJwtService, JwtService, MyConst)"]
         
         subgraph Modules["module (Vertical Slices)"]
@@ -29,6 +29,7 @@ flowchart TD
     Task -->|Valida existencia vía UseCase| Category
     Category -->|Valida existencia vía UseCase| User
 
+    Config -.-> Shared
     Auth -.-> Shared
     User -.-> Shared
     Category -.-> Shared
@@ -77,14 +78,20 @@ module/<nombre_modulo>/
 sequenceDiagram
     autonumber
     actor Client as Cliente HTTP
+    participant Flt as JwtAuthenticationFilter
     participant Ctrl as Controller
     participant Svc as Service (UseCase)
     participant Cross as Otro Módulo (IFind*UseCase)
     participant Dom as Model & Value Objects
-    participant Adp as AdapterRepository
+    participant Adp as Adapter
     participant JPA as I*Repository (Spring Data)
 
-    Client->>Ctrl: HTTP Request (Create/Update/Login DTO o Cookie)
+    Client->>Flt: HTTP Request (+ Authorization: Bearer <token>)
+    opt Ruta Protegida / Cabecera Bearer Presente
+        Flt->>Flt: jwtService.extractUserId & extractRole
+        Flt->>Flt: Registra Authentication en SecurityContextHolder (o delega 401 a GlobalExceptionController)
+    end
+    Flt->>Ctrl: Continúa FilterChain hacia Controller
     Ctrl->>Ctrl: MapperController.toServiceDto(dto)
     Ctrl->>Svc: Invoca caso de uso
     opt Validación Inter-Modular
@@ -121,7 +128,7 @@ sequenceDiagram
 ### B. Aislamiento de Lógica de Negocio, Cookies HTTP y Rol de Mappers
 - **`controller`**: Recibe peticiones HTTP, gestiona cookies `HttpOnly` (`ResponseCookie` en `AuthController`), delega al caso de uso y devuelve `ResponseEntity`. Cero reglas de negocio.
 - **`service`**: Orquesta casos de uso manteniendo **cero acoplamiento con el protocolo HTTP** (no importa `jakarta.servlet.http.*` ni `ResponseCookie`).
-- **`repository / adapter`**: Coordina con Spring Data JPA, codifica contraseñas cuando aplica (`UserAdapterRepository`) y transforma `Entity <-> Model`.
+- **`repository / adapter`**: Coordina con Spring Data JPA, codifica contraseñas cuando aplica (`UserAdapter`) y transforma `Entity <-> Model`.
 - **`Mappers`**: Clases utilitarias con métodos estáticos puros (`*MapperController`, `*MapperService`, `*MapperRepository`) que garantizan la conversión exhaustiva entre capas sin lógica condicional de negocio.
 - **`model / vo` y `service`**: Únicos lugares donde reside la lógica de negocio (invariantes de creación, transiciones de estado *copy-on-write* y orquestación de casos de uso).
 
@@ -139,12 +146,12 @@ public class DomainException extends RuntimeException {
 }
 ```
 
-El componente [`GlobalExceptionController`](../src/main/java/com/rafael/todo/shared/GlobalExceptionController.java) (`@RestControllerAdvice`) intercepta automáticamente cualquier excepción y construye un [`ErrorDto`](../src/main/java/com/rafael/todo/shared/ErrorDto.java) uniforme:
+El componente [`GlobalExceptionController`](../src/main/java/com/rafael/todo/shared/GlobalExceptionController.java) (`@RestControllerAdvice`) intercepta automáticamente cualquier excepción (tanto desde controladores como desde [`JwtAuthenticationFilter`](../src/main/java/com/rafael/todo/configuration/JwtAuthenticationFilter.java) vía `HandlerExceptionResolver`) y construye un [`ErrorDto`](../src/main/java/com/rafael/todo/shared/ErrorDto.java) uniforme:
 
 | Tipo de Excepción | Código HTTP | Ejemplo de `code` | Cuándo ocurre |
 | :--- | :---: | :--- | :--- |
 | Validación de Value Object | `400 Bad Request` | `user.email.invalid`, `task.title.too.short` | Formato inválido, nulo o fuera de rango |
-| Autenticación / Token Inválido | `401 Unauthorized` | `auth.credentials.invalid`, `auth.refresh.token.expired` | Contraseña incorrecta o token expirado/revocado |
+| Autenticación / Token Inválido | `401 Unauthorized` | `auth.credentials.invalid`, `auth.access.token.expired` | Contraseña incorrecta o token JWT/Refresh expirado o inválido |
 | Cuenta Deshabilitada | `403 Forbidden` | `auth.account.disabled` | Usuario con cuenta inactiva (`is_active = false`) |
 | Recurso Inexistente | `404 Not Found` | `user.uuid.not.found`, `auth.refresh.token.not.found` | El ID o token buscado no existe |
 | Conflicto de Unicidad | `409 Conflict` | `user.email.already.exists`, `category.name.duplicate` | Registro duplicado (ej. email o categoría por usuario) |
@@ -153,27 +160,33 @@ El componente [`GlobalExceptionController`](../src/main/java/com/rafael/todo/sha
 **Formato JSON de respuesta de error (`ErrorDto`):**
 ```json
 {
-  "code": "auth.credentials.invalid",
-  "message": "Invalid email or password",
+  "code": "auth.access.token.expired",
+  "message": "Access token has expired",
   "status": 401
 }
 ```
 
 ---
 
-## 6. Configuración, JWT y Trazabilidad
+## 6. Configuración, Seguridad JWT Stateless y Trazabilidad
 
 ### Propiedades Centralizadas (`ApplicationConfiguration`) y `JwtService`
 - [`ApplicationConfiguration.java`](../src/main/java/com/rafael/todo/configuration/ApplicationConfiguration.java) centraliza la lectura de variables definidas en `application.yaml` (`jwt.secret`, `jwt.access-token-expiration-minutes`, `jwt.refresh-token-expiration-days`).
 - [`JwtService.java`](../src/main/java/com/rafael/todo/shared/JwtService.java) (implementación de [`IJwtService.java`](../src/main/java/com/rafael/todo/shared/IJwtService.java)) firma y verifica Access Tokens con `HMAC256` (`com.auth0:java-jwt`) y genera Refresh Tokens opacos únicos.
 
-### Seguridad (`SecurityConfiguration`)
-Configurada en [`SecurityConfiguration.java`](../src/main/java/com/rafael/todo/configuration/SecurityConfiguration.java):
-- Expone el bean `PasswordEncoder` con `BCryptPasswordEncoder` para el hash seguro de contraseñas de usuario.
-- En modo desarrollo actual: deshabilita CSRF, permite todas las rutas bajo `/api/**` y habilita `frameOptions(sameOrigin)` para el uso de la consola H2.
+### Seguridad Stateless (`SecurityConfiguration` & `JwtAuthenticationFilter`)
+Configurada en [`SecurityConfiguration.java`](../src/main/java/com/rafael/todo/configuration/SecurityConfiguration.java) y [`JwtAuthenticationFilter.java`](../src/main/java/com/rafael/todo/configuration/JwtAuthenticationFilter.java):
+- Política de sesiones `SessionCreationPolicy.STATELESS` y `BCryptPasswordEncoder`.
+- **Rutas públicas (`permitAll()`)**:
+  - `POST /api/auth/login`, `POST /api/auth/refresh`, `POST /api/auth/logout`
+  - `POST /api/users` *(registro de nuevos usuarios)*
+  - `/api/h2-console/**` y `/api/error`
+- **Rutas protegidas (`authenticated()`)**:
+  - Todos los demás endpoints requieren la cabecera `Authorization: Bearer <accessToken>`.
 
 ### Trazabilidad (`@Log`)
-Se utiliza `@Log` de Lombok (`java.util.logging.Logger`) a través de las capas para registrar:
-- **`INFO`**: Entrada y salida exitosa de peticiones REST, inicio de casos de uso y operaciones de persistencia.
-- **`WARNING`**: Excepciones de dominio controladas (400, 401, 403, 404, 409) y recursos no encontrados.
+Se utiliza `@Log` de Lombok (`java.util.logging.Logger`) en todos los controladores, servicios, adaptadores, `JwtAuthenticationFilter` y `GlobalExceptionController` para registrar:
+- **`INFO`**: Entrada y salida exitosa de peticiones REST, autenticación JWT, inicio de casos de uso y operaciones de persistencia.
+- **`WARNING`**: Excepciones de dominio controladas (400, 401, 403, 404, 409), rechazos de login/token y recursos no encontrados.
 - **`SEVERE`**: Excepciones no controladas (500) en `GlobalExceptionController`.
+- **Seguridad en Logs**: Nunca se registran contraseñas ni tokens completos en texto plano.
