@@ -10,9 +10,10 @@ El proyecto organiza el código en **módulos de negocio independientes (Vertica
 
 ```text
 com.rafael.todo/
-├── configuration/                      # Configuración global y variables de entorno
+├── configuration/                      # Configuración global, seguridad y variables de entorno
 │   ├── ApplicationConfiguration.java   # Lectura centralizada de propiedades (application.yaml)
-│   └── SecurityConfiguration.java      # Configuración de Spring Security y PasswordEncoder
+│   ├── JwtAuthenticationFilter.java    # Filtro OncePerRequestFilter para validación Bearer JWT
+│   └── SecurityConfiguration.java      # Configuración Stateless de Spring Security y PasswordEncoder
 │
 ├── shared/                             # Componentes compartidos y transversales
 │   ├── DomainException.java            # Excepción base con code, message y statusCode
@@ -23,7 +24,7 @@ com.rafael.todo/
 │   └── MyConst.java                    # Enum centralizado de constantes (regex, longitudes, cookies)
 │
 └── module/                             # Módulos de funcionalidad (Vertical Slices)
-    ├── auth/                           # Módulo de autenticación JWT y Refresh Tokens
+    ├── auth/                           # Módulo de autenticación JWT y Refresh Tokens (completado + tests)
     ├── user/                           # Módulo de usuarios (completado + tests)
     ├── category/                       # Módulo de categorías (completado + tests)
     ├── task/                           # Módulo de tareas (completado + tests)
@@ -71,7 +72,7 @@ com.rafael.todo/
 - Constructor privado que invoca `super(code, message, statusCode)`.
 - Métodos estáticos de fábrica semánticos que asocian el código HTTP adecuado:
   - `400 Bad Request` para validaciones de formato, obligatoriedad o longitud.
-  - `401 Unauthorized` para credenciales inválidas o refresh tokens expirados/revocados.
+  - `401 Unauthorized` para credenciales inválidas o tokens JWT/Refresh expirados o revocados.
   - `403 Forbidden` para cuentas de usuario deshabilitadas (`accountDisabled`).
   - `404 Not Found` para recursos o IDs inexistentes.
   - `409 Conflict` para violaciones de unicidad (ej. correo o nombre de categoría duplicado).
@@ -106,14 +107,15 @@ com.rafael.todo/
 
 ---
 
-## 3. Manejo Global de Errores (`shared`)
+## 3. Manejo Global de Errores (`shared`) y Filtro JWT (`configuration`)
 - Toda excepción que herede de `DomainException` es capturada de forma automática por [`GlobalExceptionController`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/GlobalExceptionController.java) (`@RestControllerAdvice`).
-- La respuesta HTTP devuelve un JSON estándar con [`ErrorDto`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/ErrorDto.java) (`code`, `message`, `status`), garantizando consistencia en todos los módulos de la aplicación.
+- En [`JwtAuthenticationFilter`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/configuration/JwtAuthenticationFilter.java), cualquier `DomainException` producida al validar el token Bearer se redirige mediante `HandlerExceptionResolver` hacia `GlobalExceptionController`.
+- La respuesta HTTP devuelve siempre un JSON estándar con [`ErrorDto`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/ErrorDto.java) (`code`, `message`, `status`), garantizando consistencia en todos los módulos y filtros de la aplicación.
 
 ---
 
 ## 4. Arquitectura de Pruebas Unitarias (`src/test/java`)
-Cada módulo replica su estructura bajo `src/test/java/com/rafael/todo/module/<modulo>/` con 6 suites:
+Cada módulo (`auth`, `user`, `category`, `task`, `subtask`) replica su estructura bajo `src/test/java/com/rafael/todo/module/<modulo>/` con 6 suites:
 - `model/vo/*ValueObjectsTest.java`
 - `model/*ModelTest.java`
 - `mapper/*MappersTest.java`

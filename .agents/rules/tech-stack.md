@@ -42,11 +42,18 @@ Este documento resume las convenciones técnicas y tecnológicas que rigen el pr
   - `jwt.refresh-token-expiration-days`: Tiempo de vida del Refresh Token en días (`7`).
 - El servicio compartido [`JwtService.java`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/JwtService.java) (implementación de [`IJwtService.java`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/IJwtService.java)) inyecta `ApplicationConfiguration` para firmar y verificar tokens con `Algorithm.HMAC256`.
 
-### Configuración de Seguridad (Spring Security)
-- Archivo de configuración: [`SecurityConfiguration.java`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/configuration/SecurityConfiguration.java).
-- Modo de desarrollo actual:
-  - `csrf.disable()` para permitir pruebas de endpoints REST sin tokens CSRF.
-  - `authorizeHttpRequests(auth -> auth.anyRequest().permitAll())` para libre acceso a la API durante desarrollo.
+### Configuración de Seguridad Stateless (`SecurityConfiguration` & `JwtAuthenticationFilter`)
+- Archivos de configuración:
+  - [`SecurityConfiguration.java`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/configuration/SecurityConfiguration.java)
+  - [`JwtAuthenticationFilter.java`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/configuration/JwtAuthenticationFilter.java)
+- Reglas de seguridad activas:
+  - `csrf.disable()` y `SessionCreationPolicy.STATELESS`.
+  - **Rutas públicas (`permitAll()`)**:
+    - `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`
+    - `POST /users` (registro de usuarios)
+    - `/h2-console/**` y `/error`
+  - **Rutas protegidas (`authenticated()`)**:
+    - `.anyRequest().authenticated()` validado por `JwtAuthenticationFilter` antes de `UsernamePasswordAuthenticationFilter`.
   - `headers.frameOptions(sameOrigin)` para renderizar correctamente los iframes de la consola web de H2.
 - **Context Path**:
   - `server.servlet.context-path: /api` configurado en `application.yaml`.
@@ -65,9 +72,10 @@ Este documento resume las convenciones técnicas y tecnológicas que rigen el pr
 - Uso de la anotación **`@Log` de Lombok** (`import lombok.extern.java.Log;`) que inyecta un `java.util.logging.Logger log`.
 - **Dónde aplicar logs obligatoriamente**:
   1. **Controladores (`controller`)**: Entrada de peticiones HTTP con parámetros (`log.info`) y confirmación de respuesta enviada.
-  2. **Servicios (`service`)**: Inicio de operaciones de negocio (`log.info`) y advertencias ante recursos no encontrados o conflictos (`log.warning`).
+  2. **Servicios (`service`)**: Inicio de operaciones de negocio (`log.info`) y advertencias ante recursos no encontrados, cuentas inactivas o conflictos (`log.warning`).
   3. **Adaptadores (`repository/adapter`)**: Interacción con la base de datos (`log.info`).
-  4. **Manejador Global (`GlobalExceptionController`)**: Excepciones de dominio interceptadas (`log.warning`) y errores 500 no controlados (`log.severe`).
+  4. **Filtro JWT (`JwtAuthenticationFilter`) y Manejador Global (`GlobalExceptionController`)**: Autenticación exitosa (`log.info`), rechazos/excepciones de dominio (`log.warning`) y errores 500 no controlados (`log.severe`).
+- **Privacidad**: Nunca registrar contraseñas ni tokens completos en los logs.
 
 ---
 

@@ -22,11 +22,11 @@ El proyecto adopta una **Arquitectura Modular por Capas Pragmática (Vertical Sl
 
 ### 1. Organización Modular
 - Cada contexto o funcionalidad de negocio se encapsula en su propio paquete:  
-  `com.rafael.todo.module.<nombre_modulo>` (`auth`, `user`, `category`, `task`, `subtask`).
+  `com.rafael.todo.module.<nombre_modulo>` (`auth`, `user`, `category`, `task`, `subtask` — todos completados con sus suites de tests y trazabilidad `@Log`).
 - Componentes transversales y compartidos residen en:  
   `com.rafael.todo.shared` (`DomainException`, `ErrorDto`, `GlobalExceptionController`, `MyConst`, `IJwtService`, `JwtService`).
-- Configuración global (seguridad, propiedades de aplicación, beans globales) reside en:  
-  `com.rafael.todo.configuration` (`SecurityConfiguration`, `ApplicationConfiguration`).
+- Configuración global (seguridad, filtro JWT, propiedades de aplicación, beans globales) reside en:  
+  `com.rafael.todo.configuration` (`SecurityConfiguration`, `JwtAuthenticationFilter`, `ApplicationConfiguration`).
 
 ### 2. Capas por Módulo
 Dentro de cada módulo se organiza una estructura de capas clara y directa:
@@ -68,12 +68,12 @@ Dentro de cada módulo se organiza una estructura de capas clara y directa:
 
 ## 🛡️ Manejo Centralizado de Excepciones
 - Todas las excepciones de negocio extienden de [`DomainException(code, message, statusCode)`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/DomainException.java).
-- El controlador global [`GlobalExceptionController`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/GlobalExceptionController.java) (`@RestControllerAdvice`) en `shared` intercepta automáticamente cualquier `DomainException` y responde con [`ErrorDto`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/ErrorDto.java) y el código HTTP correspondiente (400, 401, 403, 404, 409, 500).
+- El controlador global [`GlobalExceptionController`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/GlobalExceptionController.java) (`@RestControllerAdvice`) en `shared` intercepta automáticamente cualquier `DomainException` (incluyendo las lanzadas en [`JwtAuthenticationFilter`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/configuration/JwtAuthenticationFilter.java) vía `HandlerExceptionResolver`) y responde con [`ErrorDto`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/ErrorDto.java) y el código HTTP correspondiente (400, 401, 403, 404, 409, 500).
 
 ---
 
 ## 🧪 Estrategia y Estándares de Testing (`src/test/java`)
-Cada módulo en `src/test/java/com/rafael/todo/module/<modulo>/` cuenta con una suite estandarizada de **6 clases de pruebas unitarias**:
+Cada módulo en `src/test/java/com/rafael/todo/module/<modulo>/` (`auth`, `user`, `category`, `task`, `subtask`) cuenta con una suite estandarizada de **6 clases de pruebas unitarias**:
 1. **`model/vo/*ValueObjectsTest.java`**: Pruebas con JUnit 5 (`@Nested`, `@DisplayName`, `@ParameterizedTest`) validando creación, normalización y excepciones de dominio (`400 Bad Request`).
 2. **`model/*ModelTest.java`**: Pruebas de fábricas (`create`, `reconstitute`) y mutaciones inmutables *copy-on-write*.
 3. **`mapper/*MappersTest.java`**: Pruebas exhaustivas de transformación para `*MapperController`, `*MapperService` y `*MapperRepository`.
@@ -94,7 +94,8 @@ La documentación oficial reside en [`doc/`](file:///c:/Users/rafae/Documents/an
 ---
 
 ## 🪵 Trazabilidad y Logs
-- Uso de la anotación `@Log` de Lombok (`import lombok.extern.java.Log;`) en controladores, servicios, adaptadores y manejador global de excepciones para monitorear el flujo de la aplicación desde la terminal.
+- Uso obligatorio de la anotación `@Log` de Lombok (`import lombok.extern.java.Log;`) en todos los controladores, servicios, adaptadores, filtro JWT (`JwtAuthenticationFilter`) y manejador global de excepciones (`GlobalExceptionController`).
+- **Seguridad en Logs**: Prohibido registrar contraseñas en texto plano o valores completos de tokens JWT/Refresh Tokens en los mensajes de log.
 
 ---
 
