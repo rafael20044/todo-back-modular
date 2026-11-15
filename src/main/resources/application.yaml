@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: ${SERVER_PORT:8080}
   servlet:
     context-path: /api
 
@@ -11,16 +11,18 @@ spring:
   # Configuración de Base de Datos (H2)
   # ----------------------------------------
   datasource:
-    url: jdbc:h2:mem:tododb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    url: ${SPRING_DATASOURCE_URL:jdbc:h2:mem:tododb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE}
     driver-class-name: org.h2.Driver
-    username: sa
-    password: ""
+    username: ${SPRING_DATASOURCE_USERNAME:sa}
+    password: ${SPRING_DATASOURCE_PASSWORD:}
 
   # Consola web H2 para visualizar datos (http://localhost:8080/api/h2-console)
   h2:
     console:
       enabled: true
       path: /h2-console
+      settings:
+        web-allow-others: ${SPRING_H2_CONSOLE_SETTINGS_WEB_ALLOW_OTHERS:false}
 
   # ----------------------------------------
   # Configuración de JPA / Hibernate
@@ -47,12 +49,12 @@ spring:
 # Configuración de JWT
 # ----------------------------------------
 jwt:
-  secret: "todo-back-modular-secret-key-2026-hmac256-signature"
-  access-token-expiration-minutes: 15
-  refresh-token-expiration-days: 7
+  secret: ${JWT_SECRET:todo-back-modular-secret-key-2026-hmac256-signature}
+  access-token-expiration-minutes: ${JWT_ACCESS_EXPIRATION_MINUTES:15}
+  refresh-token-expiration-days: ${JWT_REFRESH_EXPIRATION_DAYS:7}
 
 # ----------------------------------------
 # Configuración de CORS (Angular & Flutter)
 # ----------------------------------------
 cors:
-  allowed-origins: "http://localhost:4200,http://localhost:*,http://127.0.0.1:*"
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200,http://localhost:*,http://127.0.0.1:*}

@@ -1,0 +1,23 @@
+# Directorios de compilación y caché de Gradle
+.gradle/
+build/
+bin/
+out/
+
+# Control de versiones y configuración de IDE
+.git/
+.gitignore
+.idea/
+.vscode/
+*.iml
+
+# Documentación y reglas de agente (no necesarios dentro de la imagen)
+.agents/
+doc/
+AGENTS.md
+HELP.md
+
+# Archivos Docker
+Dockerfile
+docker-compose.yaml
+.dockerignore

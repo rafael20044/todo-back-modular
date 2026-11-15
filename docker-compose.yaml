@@ -1,0 +1,24 @@
+services:
+  todo-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: todo-back-modular
+    ports:
+      - "8080:8080"
+    environment:
+      # Base de datos H2 persistida en volumen de Docker (para conservar datos entre reinicios)
+      SPRING_DATASOURCE_URL: "jdbc:h2:file:/app/data/tododb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE"
+      SPRING_H2_CONSOLE_SETTINGS_WEB_ALLOW_OTHERS: "true"
+      # Configuración JWT
+      JWT_SECRET: "todo-back-modular-secret-key-2026-hmac256-signature"
+      JWT_ACCESS_EXPIRATION_MINUTES: 15
+      JWT_REFRESH_EXPIRATION_DAYS: 7
+      # Orígenes permitidos para Angular y Flutter
+      CORS_ALLOWED_ORIGINS: "http://localhost:4200,http://localhost:*,http://127.0.0.1:*"
+    volumes:
+      - todo_h2_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  todo_h2_data:
