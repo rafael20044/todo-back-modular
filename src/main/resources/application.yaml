@@ -50,3 +50,9 @@ jwt:
   secret: "todo-back-modular-secret-key-2026-hmac256-signature"
   access-token-expiration-minutes: 15
   refresh-token-expiration-days: 7
+
+# ----------------------------------------
+# Configuración de CORS (Angular & Flutter)
+# ----------------------------------------
+cors:
+  allowed-origins: "http://localhost:4200,http://localhost:*,http://127.0.0.1:*"

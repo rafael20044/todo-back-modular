@@ -1,5 +1,7 @@
 package com.rafael.todo.configuration;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,5 +20,7 @@ public class ApplicationConfiguration {
     @Value("${jwt.refresh-token-expiration-days}")
     private long refreshTokenExpirationDays;
 
-}
+    @Value("#{'${cors.allowed-origins}'.split(',')}")
+    private List<String> allowedOrigins;
 
+}
