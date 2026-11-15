@@ -24,10 +24,13 @@ import com.rafael.todo.module.subtask.service.IDeleteSubtaskUseCase;
 import com.rafael.todo.module.subtask.service.IFindSubtaskUseCase;
 import com.rafael.todo.module.subtask.service.IUpdateSubtaskUseCase;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.java.Log;
 
 @RestController
 @RequestMapping("/subtasks")
+@Tag(name = "5. Subtareas (Subtasks)", description = "Gestión de elementos de checklist asociados a una tarea")
 @Log
 public final class SubtaskController {
 
@@ -50,6 +53,7 @@ public final class SubtaskController {
     }
 
     @PostMapping
+    @Operation(summary = "Crear subtarea", description = "Crea una subtarea asociada a una tarea existente")
     public ResponseEntity<ResponseSubtaskDto> create(@RequestBody CreateSubtaskDto request) {
         log.info("POST /subtasks - Request received to create subtask: '" + request.title() + "' for task: " + request.taskId());
         var model = this.createSubtaskUseCase.create(SubtaskMapperController.toServiceDto(request));
@@ -60,6 +64,7 @@ public final class SubtaskController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar subtareas de una tarea", description = "Obtiene las subtareas paginadas y ordenadas por posición para un taskId")
     public ResponseEntity<Page<ResponseSubtaskDto>> findAll(
         @RequestParam Long taskId,
         @RequestParam(defaultValue = "0") int page,
@@ -71,6 +76,7 @@ public final class SubtaskController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener subtarea por ID", description = "Busca una subtarea específica por su ID")
     public ResponseEntity<ResponseSubtaskDto> findById(@PathVariable Long id) {
         log.info("GET /subtasks/" + id + " - Fetching subtask by ID");
         var model = this.findSubtaskUseCase.findById(id);
@@ -78,6 +84,7 @@ public final class SubtaskController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Actualizar subtarea", description = "Modifica el título, estado completado o posición de una subtarea")
     public ResponseEntity<ResponseSubtaskDto> update(
         @PathVariable Long id,
         @RequestBody UpdateSubtaskDto request
@@ -90,6 +97,7 @@ public final class SubtaskController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar subtarea", description = "Elimina una subtarea por su ID")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         log.info("DELETE /subtasks/" + id + " - Request received to delete subtask");
         this.deleteSubtaskUseCase.delete(id);

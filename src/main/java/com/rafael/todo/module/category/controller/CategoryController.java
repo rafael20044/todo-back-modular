@@ -25,10 +25,13 @@ import com.rafael.todo.module.category.service.IDeleteCategoryUseCase;
 import com.rafael.todo.module.category.service.IFindCategoryUseCase;
 import com.rafael.todo.module.category.service.IUpdateCategoryUseCase;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.java.Log;
 
 @RestController 
 @RequestMapping("/categories")
+@Tag(name = "3. Categorías (Categories)", description = "Gestión de categorías personalizadas por usuario")
 @Log
 public final class CategoryController {
 
@@ -50,6 +53,7 @@ public final class CategoryController {
     }
 
     @PostMapping
+    @Operation(summary = "Crear categoría", description = "Crea una nueva categoría validando la existencia del usuario y unicidad del nombre")
     public ResponseEntity<ResponseCategoryDto> create(@RequestBody CreateCategoryDto request) {
         log.info("POST /categories - Request received to create category: '" + request.name() + "' for user: " + request.userId());
         var model = this.createCategoryUseCase.create(CategoryMapperController.toServiceDto(request));
@@ -60,6 +64,7 @@ public final class CategoryController {
     }
 
     @GetMapping 
+    @Operation(summary = "Listar categorías", description = "Obtiene categorías paginadas con filtro opcional por userId")
     public ResponseEntity<Page<ResponseCategoryDto>> findAll(
         @RequestParam(required = false) UUID userId,
         @RequestParam(defaultValue = "0") int page,
@@ -72,6 +77,7 @@ public final class CategoryController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener categoría por ID", description = "Busca una categoría específica por su identificador numérico")
     public ResponseEntity<ResponseCategoryDto> findById(@PathVariable Long id) {
         log.info("GET /categories/" + id + " - Fetching category by ID");
         var model = this.findCategoryUseCase.findById(id);
@@ -79,6 +85,7 @@ public final class CategoryController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Actualizar categoría", description = "Modifica el nombre o el color hexadecimal de una categoría")
     public ResponseEntity<ResponseCategoryDto> update(
         @PathVariable Long id, 
         @RequestBody UpdateCategoryDto request
@@ -91,6 +98,7 @@ public final class CategoryController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar categoría", description = "Elimina una categoría por su ID")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         log.info("DELETE /categories/" + id + " - Request received to delete category");
         this.deleteCategoryUseCase.delete(id);

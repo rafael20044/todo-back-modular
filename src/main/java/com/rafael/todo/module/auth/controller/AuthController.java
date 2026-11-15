@@ -11,6 +11,8 @@ import com.rafael.todo.module.auth.service.IRefreshTokenUseCase;
 import com.rafael.todo.module.auth.service.dto.AuthTokensDtoService;
 import com.rafael.todo.shared.MyConst;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.java.Log;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -33,6 +35,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/auth")
+@Tag(name = "1. Autenticación (Auth)", description = "Inicio de sesión, rotación de Refresh Tokens (cookie HttpOnly 'token') y gestión de sesiones")
 @Log
 public class AuthController {
 
@@ -54,6 +57,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
+    @Operation(summary = "Iniciar sesión", description = "Valida credenciales, devuelve el accessToken JWT en el cuerpo JSON y almacena el refreshToken en la cookie HttpOnly 'token'")
     public ResponseEntity<ResponseAuthDto> login(@RequestBody LoginDto dto) {
         log.info("POST /auth/login - Login request received for email: " + dto.email());
         var data = this.loginUseCase.login(AuthMapperController.toServiceDto(dto));
@@ -62,6 +66,7 @@ public class AuthController {
     }
 
     @PostMapping("/refresh")
+    @Operation(summary = "Renovar Access Token", description = "Lee la cookie HttpOnly 'token', revoca el refreshToken anterior, emite uno nuevo en Set-Cookie y devuelve un nuevo accessToken")
     public ResponseEntity<ResponseAuthDto> refresh(@CookieValue(name = "token") String refreshToken) {
         log.info("POST /auth/refresh - Refresh token rotation request received");
         var data = this.refreshTokenUseCase.refresh(AuthMapperController.toServiceDto(refreshToken));
@@ -70,6 +75,7 @@ public class AuthController {
     }
 
     @PostMapping("/logout")
+    @Operation(summary = "Cerrar sesión actual", description = "Elimina el refreshToken actual de la base de datos y limpia la cookie HttpOnly 'token' (Max-Age=0)")
     public ResponseEntity<Void> logout(@CookieValue(name = "token") String refreshToken) {
         log.info("POST /auth/logout - Logout request received for current session");
         this.logoutUseCase.logout(refreshToken);
@@ -86,6 +92,7 @@ public class AuthController {
     }
 
     @DeleteMapping("/logout/{userId}")
+    @Operation(summary = "Cerrar todas las sesiones de un usuario", description = "Elimina todos los refresh tokens asociados al UUID del usuario")
     public ResponseEntity<Void> logoutAllByUserId(@PathVariable UUID userId) {
         log.info("DELETE /auth/logout/" + userId + " - Request received to close all sessions for user");
         this.logoutUseCase.logoutAllByUserId(userId);
@@ -94,6 +101,7 @@ public class AuthController {
     }
 
     @GetMapping("/tokens")
+    @Operation(summary = "Listar Refresh Tokens", description = "Obtiene una lista paginada de refresh tokens con filtros opcionales por userId e isRevoked")
     public ResponseEntity<Page<ResponseRefreshTokenDto>> findAll(
             @RequestParam(required = false) UUID userId,
             @RequestParam(required = false) Boolean isRevoked,
@@ -105,6 +113,7 @@ public class AuthController {
     }
 
     @GetMapping("/tokens/{id}")
+    @Operation(summary = "Obtener Refresh Token por ID", description = "Devuelve los metadatos de un refresh token específico por su identificador numérico")
     public ResponseEntity<ResponseRefreshTokenDto> findById(@PathVariable Long id) {
         log.info("GET /auth/tokens/" + id + " - Fetching refresh token by ID");
         var model = this.findRefreshTokenUseCase.findById(id);

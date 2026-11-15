@@ -46,6 +46,18 @@ spring:
     locations: classpath:db/migration
 
 # ----------------------------------------
+# Configuración de Swagger / OpenAPI 3
+# ----------------------------------------
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    persist-authorization: true
+
+# ----------------------------------------
 # Configuración de JWT
 # ----------------------------------------
 jwt:

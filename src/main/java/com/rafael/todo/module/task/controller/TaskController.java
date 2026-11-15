@@ -26,10 +26,13 @@ import com.rafael.todo.module.task.service.IDeleteTaskUseCase;
 import com.rafael.todo.module.task.service.IFindTaskUseCase;
 import com.rafael.todo.module.task.service.IUpdateTaskUseCase;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.java.Log;
 
 @RestController
 @RequestMapping("/tasks")
+@Tag(name = "4. Tareas (Tasks)", description = "Creación, filtrado avanzado, actualización de estado y eliminación de tareas")
 @Log
 public final class TaskController {
 
@@ -52,6 +55,7 @@ public final class TaskController {
     }
 
     @PostMapping
+    @Operation(summary = "Crear tarea", description = "Registra una nueva tarea validando el usuario y la categoría opcional")
     public ResponseEntity<ResponseTaskDto> create(@RequestBody CreateTaskDto request) {
         log.info("POST /tasks - Request received to create task: '" + request.title() + "' for user: " + request.userId());
         var model = this.createTaskUseCase.create(TaskMapperController.toServiceDto(request));
@@ -62,6 +66,7 @@ public final class TaskController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar tareas", description = "Obtiene tareas paginadas con filtros opcionales combinables (userId, categoryId, status)")
     public ResponseEntity<Page<ResponseTaskDto>> findAll(
         @RequestParam(required = false) UUID userId,
         @RequestParam(required = false) Long categoryId,
@@ -76,6 +81,7 @@ public final class TaskController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Obtener tarea por ID", description = "Devuelve el detalle de una tarea específica por su ID")
     public ResponseEntity<ResponseTaskDto> findById(@PathVariable Long id) {
         log.info("GET /tasks/" + id + " - Fetching task by ID");
         var model = this.findTaskUseCase.findById(id);
@@ -83,6 +89,7 @@ public final class TaskController {
     }
 
     @PutMapping("/{id}")
+    @Operation(summary = "Actualizar tarea", description = "Actualiza título, descripción, categoría, prioridad, fecha límite o estado de la tarea")
     public ResponseEntity<ResponseTaskDto> update(
         @PathVariable Long id, 
         @RequestBody UpdateTaskDto request
@@ -95,6 +102,7 @@ public final class TaskController {
     }
 
     @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar tarea", description = "Elimina una tarea y sus subtareas asociadas")
     public ResponseEntity<Void> delete(@PathVariable Long id) {
         log.info("DELETE /tasks/" + id + " - Request received to delete task");
         this.deleteTaskUseCase.delete(id);

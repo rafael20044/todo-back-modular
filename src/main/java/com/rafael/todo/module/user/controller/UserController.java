@@ -25,10 +25,13 @@ import com.rafael.todo.module.user.service.IDeleteUserUseCase;
 import com.rafael.todo.module.user.service.IFindUserUseCase;
 import com.rafael.todo.module.user.service.IUpdateUserUseCase;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.java.Log;
 
 @RestController 
 @RequestMapping("/users")
+@Tag(name = "2. Usuarios (Users)", description = "Registro, consulta, actualización y eliminación de usuarios")
 @Log
 public class UserController {
 
@@ -46,6 +49,7 @@ public class UserController {
     }
     
     @PostMapping 
+    @Operation(summary = "Registrar usuario", description = "Crea una nueva cuenta de usuario (endpoint público)")
     public ResponseEntity<ResponseUserDto> create(@RequestBody CreateUserDto dto){
         log.info("POST /users - Request received to create user with email: " + dto.email());
         var model = this.createUser.create(UserMapperController.toServiceDto(dto));
@@ -56,6 +60,7 @@ public class UserController {
     }
 
     @GetMapping
+    @Operation(summary = "Listar usuarios", description = "Obtiene el listado paginado de todos los usuarios")
     public ResponseEntity<Page<ResponseUserDto>> list(
         @RequestParam(defaultValue = "0") int page,
         @RequestParam(defaultValue = "10") int size
@@ -67,6 +72,7 @@ public class UserController {
     }
 
     @GetMapping("/{uuid}")
+    @Operation(summary = "Obtener usuario por UUID", description = "Busca un usuario específico por su identificador UUID")
     public ResponseEntity<ResponseUserDto> findById(@PathVariable UUID uuid){
         log.info("GET /users/" + uuid + " - Fetching user by ID");
         var user = this.findUser.findById(uuid);
@@ -74,6 +80,7 @@ public class UserController {
     }
 
     @PutMapping("/{uuid}")
+    @Operation(summary = "Actualizar usuario", description = "Actualiza el nombre, contraseña o rol de un usuario existente")
     public ResponseEntity<ResponseUserDto> update(@PathVariable UUID uuid, @RequestBody UpdateUserDto dto){
         log.info("PUT /users/" + uuid + " - Request received to update user");
         var model = this.updateUser.update(UserMapperController.toServiceDto(uuid, dto));
@@ -83,6 +90,7 @@ public class UserController {
     }
 
     @DeleteMapping ("/{uuid}")
+    @Operation(summary = "Eliminar usuario", description = "Elimina permanentemente un usuario y sus recursos asociados en cascada")
     public ResponseEntity<Void> delete(@PathVariable UUID uuid){
         log.info("DELETE /users/" + uuid + " - Request received to delete user");
         this.deleteUser.delete(uuid);
