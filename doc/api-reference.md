@@ -3,10 +3,12 @@
 Todos los endpoints están publicados bajo el prefijo global **`/api`** configurado en `server.servlet.context-path`.
 
 - **Base URL Local**: `http://localhost:8080/api`
+- **Swagger UI (Interactivo)**: `http://localhost:8080/api/swagger-ui/index.html`
+- **Especificación OpenAPI 3 (JSON)**: `http://localhost:8080/api/v3/api-docs`
 - **Formato de Intercambio**: `application/json`
 - **Autenticación JWT (Stateless)**:
-  - **Rutas Públicas**: `POST /api/auth/login`, `POST /api/auth/refresh`, `POST /api/auth/logout` y `POST /api/users`.
-  - **Rutas Protegidas**: Todos los demás endpoints requieren la cabecera `Authorization: Bearer <accessToken>`.
+  - **Rutas Públicas**: `POST /api/auth/login`, `POST /api/auth/refresh`, `POST /api/auth/logout`, `POST /api/users` y rutas de Swagger UI.
+  - **Rutas Protegidas**: Todos los demás endpoints requieren la cabecera `Authorization: Bearer <accessToken>` (en Swagger UI puedes pegarlo usando el botón **Authorize**).
 - **Paginación**: Todos los listados (`GET`) devuelven un objeto `Page<T>` estándar de Spring Data.
 - **Eliminación (`DELETE`)**: Siempre retorna `204 No Content` sin cuerpo.
 

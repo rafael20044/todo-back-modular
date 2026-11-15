@@ -11,17 +11,19 @@ Este documento resume las convenciones técnicas y tecnológicas que rigen el pr
 
 ---
 
-## 🍃 Spring Boot, Persistencia & JWT
+## 🍃 Spring Boot, Persistencia, JWT, OpenAPI & Docker
 
 ### Versiones Clave
 - **Spring Boot**: `4.1.1`
 - **Spring Security**: `7.1.1`
 - **Hibernate ORM Core**: `7.4.5`
 - **Auth0 Java JWT**: `com.auth0:java-jwt:4.5.0`
+- **SpringDoc OpenAPI UI**: `org.springdoc:springdoc-openapi-starter-webmvc-ui:3.2.0` (compatible con Spring Boot 4.x)
 - **Java JDK**: `25`
+- **Imágenes Docker**: `eclipse-temurin:25-jdk-alpine` (build) y `eclipse-temurin:25-jre-alpine` (runtime no-root)
 
 ### Flyway & Base de Datos (H2)
-- El proyecto utiliza **H2 en memoria** (`jdbc:h2:mem:tododb`).
+- El proyecto utiliza **H2 en memoria** por defecto (`jdbc:h2:mem:tododb`) o persistido en volumen en Docker (`jdbc:h2:file:/app/data/tododb`).
 - `flyway.enabled: true`: Las migraciones en `src/main/resources/db/migration/V{n}__{descripcion}.sql` son la **única fuente de verdad** del esquema de base de datos.
 - `spring.jpa.hibernate.ddl-auto: none`: Hibernate no altera el esquema automáticamente; solo Flyway ejecuta las migraciones.
 - **Convenciones del Esquema**:
@@ -43,10 +45,11 @@ Este documento resume las convenciones técnicas y tecnológicas que rigen el pr
   - `cors.allowed-origins`: Lista de orígenes permitidos para Angular y Flutter (`http://localhost:4200`, `http://localhost:*`, `http://127.0.0.1:*`).
 - El servicio compartido [`JwtService.java`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/JwtService.java) (implementación de [`IJwtService.java`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/IJwtService.java)) inyecta `ApplicationConfiguration` para firmar y verificar tokens con `Algorithm.HMAC256`.
 
-### Configuración de Seguridad Stateless y CORS (`SecurityConfiguration` & `JwtAuthenticationFilter`)
+### Configuración de Seguridad Stateless, CORS y OpenAPI (`SecurityConfiguration`, `JwtAuthenticationFilter` & `OpenApiConfiguration`)
 - Archivos de configuración:
   - [`SecurityConfiguration.java`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/configuration/SecurityConfiguration.java)
   - [`JwtAuthenticationFilter.java`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/configuration/JwtAuthenticationFilter.java)
+  - [`OpenApiConfiguration.java`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/configuration/OpenApiConfiguration.java)
 - Reglas de seguridad activas:
   - **CORS (`corsConfigurationSource()`)**: Habilitado con `setAllowedOriginPatterns(appConfig.getAllowedOrigins())`, `setAllowCredentials(true)` (para envío/recepción de cookie `HttpOnly` desde Angular/Flutter), métodos `GET, POST, PUT, DELETE, PATCH, OPTIONS` y exposición de cabeceras `Location` y `Set-Cookie`.
   - `csrf.disable()` y `SessionCreationPolicy.STATELESS`.
@@ -54,13 +57,16 @@ Este documento resume las convenciones técnicas y tecnológicas que rigen el pr
     - `OPTIONS /**` (preflight CORS)
     - `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`
     - `POST /users` (registro de usuarios)
+    - `/swagger-ui/**`, `/swagger-ui.html`, `/v3/api-docs/**` (documentación interactiva OpenAPI 3)
     - `/h2-console/**` y `/error`
   - **Rutas protegidas (`authenticated()`)**:
     - `.anyRequest().authenticated()` validado por `JwtAuthenticationFilter` antes de `UsernamePasswordAuthenticationFilter`.
   - `headers.frameOptions(sameOrigin)` para renderizar correctamente los iframes de la consola web de H2.
-- **Context Path**:
+- **Context Path y URLs de Desarrollo**:
   - `server.servlet.context-path: /api` configurado en `application.yaml`.
-  - La URL para acceder a la consola H2 es: **`http://localhost:8080/api/h2-console`**.
+  - **Swagger UI**: **`http://localhost:8080/api/swagger-ui/index.html`** (con botón global `Authorize` para JWT Bearer).
+  - **Especificación OpenAPI JSON**: **`http://localhost:8080/api/v3/api-docs`**.
+  - **Consola H2**: **`http://localhost:8080/api/h2-console`**.
 
 ---
 

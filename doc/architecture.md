@@ -11,7 +11,7 @@ Cada contexto de negocio vive en su propio paquete bajo `com.rafael.todo.module.
 ```mermaid
 flowchart TD
     subgraph App["com.rafael.todo"]
-        Config["configuration\n(ApplicationConfiguration,\nJwtAuthenticationFilter,\nSecurityConfiguration)"]
+        Config["configuration\n(ApplicationConfiguration,\nJwtAuthenticationFilter,\nOpenApiConfiguration,\nSecurityConfiguration)"]
         Shared["shared\n(DomainException, ErrorDto,\nGlobalExceptionController,\nIJwtService, JwtService, MyConst)"]
         
         subgraph Modules["module (Vertical Slices)"]
@@ -49,7 +49,7 @@ module/<nombre_modulo>/
 ├── controller/                   # Capa de Presentación REST
 │   ├── dto/                      # Records de entrada (Create*Dto, Update*Dto, LoginDto) y salida (Response*Dto)
 │   ├── mapper/                   # Transformación estática Controller DTO <-> Service DTO / Model
-│   └── *Controller.java          # Endpoints HTTP (@RestController) y gestión de cookies HttpOnly
+│   └── *Controller.java          # Endpoints HTTP (@RestController, @Log, @Tag, @Operation) y gestión de cookies HttpOnly
 ├── service/                      # Capa de Aplicación / Casos de Uso
 │   ├── dto/                      # Records de transporte para casos de uso
 │   ├── imp/                      # Implementación de servicios (*Service.java)
@@ -126,7 +126,7 @@ sequenceDiagram
    - Si el recurso relacionado no existe o no es válido, el caso de uso lanza una `DomainException` con el código HTTP semántico correspondiente (`401`, `403`, `404`), evitando errores `DataIntegrityViolationException` (HTTP 500) en la base de datos.
 
 ### B. Aislamiento de Lógica de Negocio, Cookies HTTP y Rol de Mappers
-- **`controller`**: Recibe peticiones HTTP, gestiona cookies `HttpOnly` (`ResponseCookie` en `AuthController`), delega al caso de uso y devuelve `ResponseEntity`. Cero reglas de negocio.
+- **`controller`**: Recibe peticiones HTTP, gestiona cookies `HttpOnly` (`ResponseCookie` en `AuthController`), expone metadatos OpenAPI (`@Tag`, `@Operation`), delega al caso de uso y devuelve `ResponseEntity`. Cero reglas de negocio.
 - **`service`**: Orquesta casos de uso manteniendo **cero acoplamiento con el protocolo HTTP** (no importa `jakarta.servlet.http.*` ni `ResponseCookie`).
 - **`repository / adapter`**: Coordina con Spring Data JPA, codifica contraseñas cuando aplica (`UserAdapter`) y transforma `Entity <-> Model`.
 - **`Mappers`**: Clases utilitarias con métodos estáticos puros (`*MapperController`, `*MapperService`, `*MapperRepository`) que garantizan la conversión exhaustiva entre capas sin lógica condicional de negocio.
@@ -168,11 +168,14 @@ El componente [`GlobalExceptionController`](../src/main/java/com/rafael/todo/sha
 
 ---
 
-## 6. Configuración, CORS, Seguridad JWT Stateless y Trazabilidad
+## 6. Configuración, CORS, Seguridad JWT Stateless, OpenAPI 3 y Trazabilidad
 
 ### Propiedades Centralizadas (`ApplicationConfiguration`) y `JwtService`
 - [`ApplicationConfiguration.java`](../src/main/java/com/rafael/todo/configuration/ApplicationConfiguration.java) centraliza la lectura de variables definidas en `application.yaml` (`jwt.secret`, `jwt.access-token-expiration-minutes`, `jwt.refresh-token-expiration-days`, `cors.allowed-origins`).
 - [`JwtService.java`](../src/main/java/com/rafael/todo/shared/JwtService.java) (implementación de [`IJwtService.java`](../src/main/java/com/rafael/todo/shared/IJwtService.java)) firma y verifica Access Tokens con `HMAC256` (`com.auth0:java-jwt`) y genera Refresh Tokens opacos únicos.
+
+### Documentación OpenAPI 3 / Swagger UI (`OpenApiConfiguration`)
+- [`OpenApiConfiguration.java`](../src/main/java/com/rafael/todo/configuration/OpenApiConfiguration.java) define el bean `OpenAPI` con la información de la API y el esquema de seguridad global HTTP Bearer (`bearerAuth`), habilitando el botón **Authorize** en Swagger UI (`/api/swagger-ui/index.html`).
 
 ### Seguridad Stateless y CORS (`SecurityConfiguration` & `JwtAuthenticationFilter`)
 Configurada en [`SecurityConfiguration.java`](../src/main/java/com/rafael/todo/configuration/SecurityConfiguration.java) y [`JwtAuthenticationFilter.java`](../src/main/java/com/rafael/todo/configuration/JwtAuthenticationFilter.java):
@@ -182,6 +185,7 @@ Configurada en [`SecurityConfiguration.java`](../src/main/java/com/rafael/todo/c
   - `OPTIONS /**` *(preflight CORS)*
   - `POST /api/auth/login`, `POST /api/auth/refresh`, `POST /api/auth/logout`
   - `POST /api/users` *(registro de nuevos usuarios)*
+  - `/api/swagger-ui/**`, `/api/swagger-ui.html`, `/api/v3/api-docs/**` *(Swagger UI y especificación OpenAPI)*
   - `/api/h2-console/**` y `/api/error`
 - **Rutas protegidas (`authenticated()`)**:
   - Todos los demás endpoints requieren la cabecera `Authorization: Bearer <accessToken>`.

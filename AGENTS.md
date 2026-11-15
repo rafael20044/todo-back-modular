@@ -25,12 +25,12 @@ El proyecto adopta una **Arquitectura Modular por Capas Pragmática (Vertical Sl
   `com.rafael.todo.module.<nombre_modulo>` (`auth`, `user`, `category`, `task`, `subtask` — todos completados con sus suites de tests y trazabilidad `@Log`).
 - Componentes transversales y compartidos residen en:  
   `com.rafael.todo.shared` (`DomainException`, `ErrorDto`, `GlobalExceptionController`, `MyConst`, `IJwtService`, `JwtService`).
-- Configuración global (seguridad, filtro JWT, propiedades de aplicación, beans globales) reside en:  
-  `com.rafael.todo.configuration` (`SecurityConfiguration`, `JwtAuthenticationFilter`, `ApplicationConfiguration`).
+- Configuración global (seguridad, CORS, filtro JWT, OpenAPI/Swagger, propiedades de aplicación, beans globales) reside en:  
+  `com.rafael.todo.configuration` (`SecurityConfiguration`, `JwtAuthenticationFilter`, `ApplicationConfiguration`, `OpenApiConfiguration`).
 
 ### 2. Capas por Módulo
 Dentro de cada módulo se organiza una estructura de capas clara y directa:
-1. **`controller`**: Controladores REST (`@RestController` con `@Log`), DTOs de petición/respuesta (`record`s) y mappers a servicios.
+1. **`controller`**: Controladores REST (`@RestController` con `@Log`, `@Tag` y `@Operation` de OpenAPI 3), DTOs de petición/respuesta (`record`s) y mappers a servicios.
    - Endpoint unificado `findAll`: Soporta filtros opcionales por `@RequestParam` y paginación con `Page<ResponseDto>`.
    - `DELETE`: Retorna siempre `ResponseEntity<Void>` con status 204 (`noContent().build()`).
    - **Cookies `HttpOnly` (`auth`)**: El manejo de cookies (`ResponseCookie`, `HttpHeaders.SET_COOKIE`, `@CookieValue`) reside exclusivamente en el controlador para mantener la capa `service` desacoplada del protocolo HTTP.
@@ -85,10 +85,10 @@ Cada módulo en `src/test/java/com/rafael/todo/module/<modulo>/` (`auth`, `user`
 
 ## 📖 Documentación Técnica del Proyecto (`/doc`)
 La documentación oficial reside en [`doc/`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/doc) y debe mantenerse sincronizada ante nuevos módulos o cambios de diseño:
-- [`doc/README.md`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/doc/README.md): Índice general, stack tecnológico y guía rápida.
-- [`doc/architecture.md`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/doc/architecture.md): Arquitectura modular (*Vertical Slices*), flujo entre capas y manejo de errores.
+- [`doc/README.md`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/doc/README.md): Índice general, stack tecnológico, ejecución local y con Docker (`Dockerfile`, `docker-compose.yaml`).
+- [`doc/architecture.md`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/doc/architecture.md): Arquitectura modular (*Vertical Slices*), flujo entre capas, seguridad CORS/JWT, OpenAPI 3 y manejo de errores.
 - [`doc/database.md`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/doc/database.md): Esquema SQL en Flyway ([`V1__initial_schema.sql`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/resources/db/migration/V1__initial_schema.sql)), diagrama ER y diccionario de tablas.
-- [`doc/api-reference.md`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/doc/api-reference.md): Catálogo completo de endpoints REST y payloads JSON.
+- [`doc/api-reference.md`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/doc/api-reference.md): Catálogo completo de endpoints REST, acceso a Swagger UI (`/api/swagger-ui/index.html`) y payloads JSON.
 - [`doc/domain-and-validations.md`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/doc/domain-and-validations.md): Modelos inmutables, Value Objects, invariantes y constantes de `MyConst`.
 
 ---

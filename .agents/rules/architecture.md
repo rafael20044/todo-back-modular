@@ -10,10 +10,11 @@ El proyecto organiza el código en **módulos de negocio independientes (Vertica
 
 ```text
 com.rafael.todo/
-├── configuration/                      # Configuración global, seguridad y variables de entorno
+├── configuration/                      # Configuración global, seguridad, OpenAPI y variables de entorno
 │   ├── ApplicationConfiguration.java   # Lectura centralizada de propiedades (application.yaml)
 │   ├── JwtAuthenticationFilter.java    # Filtro OncePerRequestFilter para validación Bearer JWT
-│   └── SecurityConfiguration.java      # Configuración Stateless de Spring Security y PasswordEncoder
+│   ├── OpenApiConfiguration.java       # Configuración global de Swagger UI / OpenAPI 3 y esquema Bearer JWT
+│   └── SecurityConfiguration.java      # Configuración Stateless de Spring Security, CORS y PasswordEncoder
 │
 ├── shared/                             # Componentes compartidos y transversales
 │   ├── DomainException.java            # Excepción base con code, message y statusCode
@@ -96,7 +97,7 @@ com.rafael.todo/
 - Subpaquetes: `dto/` (Records de servicio), `imp/` (Implementación con `@Log`) y `mapper/` (Mapper a modelo de dominio).
 
 ### F. Capa de Presentación (`controller`)
-- Controladores `@RestController` con `@RequestMapping` y `@Log`. Generados inicialmente con esqueleto técnico (`return null;`).
+- Controladores `@RestController` con `@RequestMapping`, `@Log` y documentación OpenAPI ligera (`@Tag` a nivel de clase y `@Operation(summary, description)` en cada endpoint). Generados inicialmente con esqueleto técnico (`return null;`).
 - **Endpoint Unificado de Listados (`findAll`)**: Un único endpoint `GET` que recibe filtros opcionales como `@RequestParam` y paginación (`page`, `size`), retornando `ResponseEntity<Page<ResponseDto>>`.
 - **Eliminación (`DELETE`)**: Siempre retorna `ResponseEntity<Void>` con status HTTP 204 (`ResponseEntity.noContent().build()`).
 - **Gestión de Cookies `HttpOnly` (`AuthController`)**:
