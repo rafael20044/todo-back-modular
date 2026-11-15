@@ -40,15 +40,18 @@ Este documento resume las convenciones técnicas y tecnológicas que rigen el pr
   - `jwt.secret`: Clave secreta para firma HMAC256.
   - `jwt.access-token-expiration-minutes`: Tiempo de vida del Access Token en minutos (`15`).
   - `jwt.refresh-token-expiration-days`: Tiempo de vida del Refresh Token en días (`7`).
+  - `cors.allowed-origins`: Lista de orígenes permitidos para Angular y Flutter (`http://localhost:4200`, `http://localhost:*`, `http://127.0.0.1:*`).
 - El servicio compartido [`JwtService.java`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/JwtService.java) (implementación de [`IJwtService.java`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/shared/IJwtService.java)) inyecta `ApplicationConfiguration` para firmar y verificar tokens con `Algorithm.HMAC256`.
 
-### Configuración de Seguridad Stateless (`SecurityConfiguration` & `JwtAuthenticationFilter`)
+### Configuración de Seguridad Stateless y CORS (`SecurityConfiguration` & `JwtAuthenticationFilter`)
 - Archivos de configuración:
   - [`SecurityConfiguration.java`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/configuration/SecurityConfiguration.java)
   - [`JwtAuthenticationFilter.java`](file:///c:/Users/rafae/Documents/antigravity/todo-back-modular/src/main/java/com/rafael/todo/configuration/JwtAuthenticationFilter.java)
 - Reglas de seguridad activas:
+  - **CORS (`corsConfigurationSource()`)**: Habilitado con `setAllowedOriginPatterns(appConfig.getAllowedOrigins())`, `setAllowCredentials(true)` (para envío/recepción de cookie `HttpOnly` desde Angular/Flutter), métodos `GET, POST, PUT, DELETE, PATCH, OPTIONS` y exposición de cabeceras `Location` y `Set-Cookie`.
   - `csrf.disable()` y `SessionCreationPolicy.STATELESS`.
   - **Rutas públicas (`permitAll()`)**:
+    - `OPTIONS /**` (preflight CORS)
     - `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`
     - `POST /users` (registro de usuarios)
     - `/h2-console/**` y `/error`

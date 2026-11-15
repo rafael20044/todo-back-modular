@@ -77,7 +77,7 @@ module/<nombre_modulo>/
 ```mermaid
 sequenceDiagram
     autonumber
-    actor Client as Cliente HTTP
+    actor Client as Cliente HTTP (Angular / Flutter)
     participant Flt as JwtAuthenticationFilter
     participant Ctrl as Controller
     participant Svc as Service (UseCase)
@@ -168,16 +168,18 @@ El componente [`GlobalExceptionController`](../src/main/java/com/rafael/todo/sha
 
 ---
 
-## 6. Configuración, Seguridad JWT Stateless y Trazabilidad
+## 6. Configuración, CORS, Seguridad JWT Stateless y Trazabilidad
 
 ### Propiedades Centralizadas (`ApplicationConfiguration`) y `JwtService`
-- [`ApplicationConfiguration.java`](../src/main/java/com/rafael/todo/configuration/ApplicationConfiguration.java) centraliza la lectura de variables definidas en `application.yaml` (`jwt.secret`, `jwt.access-token-expiration-minutes`, `jwt.refresh-token-expiration-days`).
+- [`ApplicationConfiguration.java`](../src/main/java/com/rafael/todo/configuration/ApplicationConfiguration.java) centraliza la lectura de variables definidas en `application.yaml` (`jwt.secret`, `jwt.access-token-expiration-minutes`, `jwt.refresh-token-expiration-days`, `cors.allowed-origins`).
 - [`JwtService.java`](../src/main/java/com/rafael/todo/shared/JwtService.java) (implementación de [`IJwtService.java`](../src/main/java/com/rafael/todo/shared/IJwtService.java)) firma y verifica Access Tokens con `HMAC256` (`com.auth0:java-jwt`) y genera Refresh Tokens opacos únicos.
 
-### Seguridad Stateless (`SecurityConfiguration` & `JwtAuthenticationFilter`)
+### Seguridad Stateless y CORS (`SecurityConfiguration` & `JwtAuthenticationFilter`)
 Configurada en [`SecurityConfiguration.java`](../src/main/java/com/rafael/todo/configuration/SecurityConfiguration.java) y [`JwtAuthenticationFilter.java`](../src/main/java/com/rafael/todo/configuration/JwtAuthenticationFilter.java):
+- **CORS (`corsConfigurationSource`)**: Soporta clientes **Angular** (`http://localhost:4200`) y **Flutter** (`http://localhost:*`, `http://127.0.0.1:*`), habilitando `allowCredentials(true)` para el intercambio de la cookie `HttpOnly` (`token`) y exponiendo `Location` y `Set-Cookie`.
 - Política de sesiones `SessionCreationPolicy.STATELESS` y `BCryptPasswordEncoder`.
 - **Rutas públicas (`permitAll()`)**:
+  - `OPTIONS /**` *(preflight CORS)*
   - `POST /api/auth/login`, `POST /api/auth/refresh`, `POST /api/auth/logout`
   - `POST /api/users` *(registro de nuevos usuarios)*
   - `/api/h2-console/**` y `/api/error`

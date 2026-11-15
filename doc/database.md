@@ -4,7 +4,7 @@ El esquema de base de datos está gobernado exclusivamente por **Flyway** (`spri
 
 ---
 
-## 1. Configuración de Persistencia y JWT (`application.yaml`)
+## 1. Configuración de Persistencia, JWT y CORS (`application.yaml`)
 
 | Propiedad | Valor | Descripción |
 | :--- | :--- | :--- |
@@ -14,9 +14,10 @@ El esquema de base de datos está gobernado exclusivamente por **Flyway** (`spri
 | `spring.h2.console.enabled` | `true` | Habilita la consola web en `http://localhost:8080/api/h2-console` |
 | `spring.jpa.hibernate.ddl-auto` | `none` | Desactiva la generación automática de tablas por Hibernate |
 | `spring.flyway.enabled` | `true` | Ejecuta las migraciones SQL de `classpath:db/migration` al arrancar |
-| `jwt.secret` | `${JWT_SECRET:...}` | Clave secreta HMAC256 leída por `ApplicationConfiguration` |
+| `jwt.secret` | `"todo-back-modular-secret-key-2026-hmac256-signature"` | Clave secreta HMAC256 leída por `ApplicationConfiguration` |
 | `jwt.access-token-expiration-minutes` | `15` | Duración del Access Token en minutos |
 | `jwt.refresh-token-expiration-days` | `7` | Duración del Refresh Token en días |
+| `cors.allowed-origins` | `"http://localhost:4200,http://localhost:*,http://127.0.0.1:*"` | Patrones de origen permitidos para clientes Angular y Flutter |
 
 ---
 
